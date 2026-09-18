@@ -61,6 +61,17 @@ class DatasetProfile(ContractBaseModel):
     missing_value_count: int = Field(ge=0)
     duplicate_row_count: int = Field(default=0, ge=0)
     warnings: list[str] = Field(default_factory=list)
+    analysis_ready: bool = True
+    parsed_record_count: int = Field(default=0, ge=0)
+    error_record_count: int = Field(default=0, ge=0)
+    warning_count: int = Field(default=0, ge=0)
+    error_count: int = Field(default=0, ge=0)
+    blocking_count: int = Field(default=0, ge=0)
+    field_profiles: list[FieldProfile] = Field(default_factory=list)
+    group_counts: dict[str, int] = Field(default_factory=dict)
+    unit_values: dict[str, list[str]] = Field(default_factory=dict)
+    duplicate_record_numbers: list[int] = Field(default_factory=list)
+    source_sheet_name: str | None = None
 
 
 class ValidationIssue(ContractBaseModel):
@@ -72,6 +83,24 @@ class ValidationIssue(ContractBaseModel):
     location: str = Field(min_length=1)
     suggested_action: str = Field(min_length=1)
     auto_fixed: bool = False
+    source_file: str | None = None
+    sheet_name: str | None = None
+    record_number: int | None = Field(default=None, ge=1)
+    source_row_number: int | None = Field(default=None, ge=1)
+    field: str | None = None
+    raw_value: str | None = Field(default=None, max_length=200)
+
+
+class FieldProfile(ContractBaseModel):
+    """Observed structural facts for one canonical field."""
+
+    field_name: str = Field(min_length=1)
+    source_column: str | None = None
+    observed_types: list[str] = Field(default_factory=list)
+    non_missing_count: int = Field(default=0, ge=0)
+    missing_count: int = Field(default=0, ge=0)
+    invalid_count: int = Field(default=0, ge=0)
+    non_finite_count: int = Field(default=0, ge=0)
 
 
 class AnalysisPlan(ContractBaseModel):
@@ -138,6 +167,40 @@ class InputFile(ContractBaseModel):
     size_bytes: int = Field(ge=0)
 
 
+class ArtifactFile(ContractBaseModel):
+    """A generated file recorded by a run manifest."""
+
+    path: str = Field(min_length=1)
+    sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
+    size_bytes: int = Field(ge=0)
+    artifact_type: str = Field(min_length=1)
+
+
+class ImportedRecord(ContractBaseModel):
+    """One preserved source record with raw and parsed views."""
+
+    record_number: int = Field(ge=1)
+    source_file: str = Field(min_length=1)
+    sheet_name: str | None = None
+    source_row_number: int | None = Field(default=None, ge=1)
+    raw_values: dict[str, Any] = Field(default_factory=dict)
+    parsed_values: dict[str, Any] = Field(default_factory=dict)
+    source_locations: dict[str, str] = Field(default_factory=dict)
+
+
+class ImportResult(ContractBaseModel):
+    """Traceable output of Phase 1 import and structural QC."""
+
+    input_file: InputFile
+    experiment_type: AssayType
+    column_mapping: dict[str, str] = Field(default_factory=dict)
+    parse_configuration: dict[str, Any] = Field(default_factory=dict)
+    dataset_profile: DatasetProfile
+    validation_issues: list[ValidationIssue] = Field(default_factory=list)
+    records: list[ImportedRecord] = Field(default_factory=list)
+    analysis_ready: bool
+
+
 class RunManifest(ContractBaseModel):
     """Audit envelope for one future analysis run."""
 
@@ -151,10 +214,16 @@ class RunManifest(ContractBaseModel):
     created_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    assay_type: AssayType | None = None
+    column_mapping: dict[str, str] = Field(default_factory=dict)
+    parse_configuration: dict[str, Any] = Field(default_factory=dict)
+    output_files: list[ArtifactFile] = Field(default_factory=list)
+    analysis_ready: bool = False
 
 
 __all__ = [
     "SCHEMA_VERSION",
+    "ArtifactFile",
     "AnalysisPlan",
     "AnalysisResult",
     "AssayType",
@@ -163,6 +232,9 @@ __all__ = [
     "DatasetProfile",
     "ExperimentSpec",
     "InputFile",
+    "ImportResult",
+    "ImportedRecord",
+    "FieldProfile",
     "ReportArtifact",
     "RunManifest",
     "StatisticRecord",

@@ -56,3 +56,9 @@ python scripts\generate_xlsx_templates.py
 - Stop and ask the project owner when a scientific rule or architectural choice would materially change the design.
 - Phase 0 ends with contracts, documentation, synthetic examples, and tooling only. It must not implement ingestion, profiling, QC, statistics, fitting, charts, AI, reports, or formal UI.
 
+## Phase 1 implementation boundary
+
+- Phase 1 may implement read-only CSV/XLSX ingestion, explicit mappings, type parsing, structural QC, traceable JSON artifacts, and an offline CLI.
+- Phase 1 must not implement statistical tests, CV calculations, outlier detection or deletion, curve fitting, charts, AI/API calls, Word reports, databases, network behavior, or formal UI.
+- Keep raw source values and parsed values side by side with source locations. `analysis_ready=false` whenever an error or blocking issue exists.
+- Preserve biological, technical, and unknown repeat types. Never infer pairing, independence, sample size, units, or aggregate observations.

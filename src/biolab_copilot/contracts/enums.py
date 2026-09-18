@@ -22,5 +22,10 @@ class IssueSeverity(StrEnum):
     BLOCKING = "blocking"
 
 
-__all__ = ["IssueSeverity", "RunStatus"]
+class ReplicateType(StrEnum):
+    BIOLOGICAL = "biological"
+    TECHNICAL = "technical"
+    UNKNOWN = "unknown"
 
+
+__all__ = ["IssueSeverity", "RunStatus"]

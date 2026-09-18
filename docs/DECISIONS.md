@@ -35,3 +35,23 @@
 - **Decision:** Borrow only high-level design ideas from named references, review licenses independently, and implement original code under an MIT license with compatible dependencies.
 - **Consequences:** More design work is required, while provenance, licensing, and scope remain clear.
 
+## ADR-006: Use explicit assay contracts and user-confirmed column mappings
+
+- **Status:** Accepted for Phase 1
+- **Context:** File names and similar headers cannot reliably establish scientific meaning. The Phase 0 specification names two assay types but does not define their minimum fields or repeat metadata.
+- **Decision:** `generic_grouped` requires `sample_id`, `group`, and finite numeric `measurement`. `elisa_standard_curve` requires `sample_id`, supported `sample_type`, and finite numeric `measurement`; standard rows additionally require finite numeric `standard_concentration`. The user must explicitly select the assay type and submit a source-to-canonical mapping. Suggestions are informational only.
+- **Consequences:** Imports are conservative and auditable. Users must provide mapping metadata, and unsupported layouts fail visibly instead of being guessed.
+
+## ADR-007: Preserve repeat design as metadata during ingestion
+
+- **Status:** Accepted for Phase 1
+- **Context:** Biological and technical replicates have different scientific meaning. Phase 1 lacks the experiment-design context needed to infer independence or pairing.
+- **Decision:** Preserve `replicate_id`, `replicate_type`, and optional biological/technical replicate identifiers. Missing repeat type becomes `unknown` with a warning. Phase 1 never aggregates, averages, pairs, or treats technical repeats as independent biological samples.
+- **Consequences:** Later statistical phases must require an explicit design confirmation before selecting tests or aggregating observations.
+
+## ADR-008: Read CSV/XLSX conservatively with bounded resources
+
+- **Status:** Accepted for Phase 1
+- **Context:** CSV quoting, Excel formulas, macros, malformed ZIP content, and oversized workbooks can create ambiguity or resource risk.
+- **Decision:** Use strict CSV parsing with explicit encoding/delimiter, `openpyxl` read-only formula-preserving mode for `.xlsx`, disabled links/macros, explicit sheet selection for multi-sheet workbooks, SHA-256 before/after checks, and configurable file/row/uncompressed-size limits.
+- **Consequences:** Some inputs require a reviewed export or explicit user options. Cached formula values are never treated as scientific source values.

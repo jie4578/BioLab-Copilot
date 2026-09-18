@@ -11,6 +11,7 @@ requires-python = ">=3.11,<3.12"
 license = { file = "LICENSE" }
 authors = [{ name = "BioLab Copilot contributors" }]
 dependencies = [
+    "openpyxl>=3.1,<4",
     "pydantic>=2.6,<3",
 ]
 
@@ -23,6 +24,9 @@ dev = [
 templates = [
     "openpyxl>=3.1,<4",
 ]
+
+[project.scripts]
+biolab-copilot = "biolab_copilot.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -47,3 +51,7 @@ strict = true
 files = ["src"]
 warn_unused_configs = true
 
+[[tool.mypy.overrides]]
+module = ["openpyxl", "openpyxl.*"]
+# openpyxl has no installed type stubs in the offline runtime; our boundary code remains typed.
+ignore_missing_imports = true

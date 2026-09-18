@@ -16,13 +16,13 @@ Contracts and audit primitives
 Local filesystem and user-controlled configuration
 ```
 
-Phase 0 implements only the contracts layer and placeholders. The diagram is a target boundary, not implemented behavior.
+Phase 1 implements the contracts, read-only ingestion, and structural profiling/QC boundaries. Assay statistics, visualization, reporting, AI, batch orchestration, and UI remain target boundaries and are not implemented.
 
 ## Module responsibilities
 
 - `contracts`: versioned Pydantic models, enums, serialization, and JSON Schema. No I/O or scientific calculations.
-- `ingestion`: future read-only CSV/XLSX intake, source preservation, encoding/format errors, and hashes.
-- `profiling`: future descriptive shape/type/missingness profiling and alerts.
+- `ingestion`: read-only Phase 1 CSV/XLSX intake, source preservation, encoding/format errors, sheet selection, resource limits, and hashes.
+- `profiling`: Phase 1 structural shape/type/missingness profiling, explicit mapping validation, and reviewable alerts. It does not calculate CVs or statistics.
 - `assays`: future plugin definitions and assay-specific validation/planning rules.
 - `statistics`: future deterministic calculations only; numeric outputs must be structured and testable.
 - `visualization`: future rendering from structured results; it must not recompute scientific values.
@@ -57,4 +57,3 @@ The interface will be designed and tested in the phase that introduces assays. P
 ## Optional Antibody AI integration boundary
 
 Any future integration is optional and isolated behind an adapter in `ai` or an external integration package. It may map user-approved identifiers such as `antibody_id`, `sequence_id`, `mutation_id`, `experiment_id`, or `sample_id` into context, subject to explicit consent and redaction. It must not require the external project, copy its code, receive raw files by default, calculate statistics, delete data, or modify conclusions. The core system must remain fully functional when the adapter is absent.
-

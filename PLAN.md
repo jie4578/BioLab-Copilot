@@ -2,6 +2,8 @@
 
 Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
 
+Current delivery: Phase 1 implementation is complete in the working tree and remains uncommitted pending owner acceptance. Phase 2 has not started.
+
 ## Phase 0 — Foundation and contracts
 
 - **Goal:** Establish governance, stable data contracts, synthetic fixtures, and local development checks.
@@ -21,6 +23,7 @@ Every phase ends with a written status review. A failed test, lint check, type c
 - **Test method:** Synthetic CSV/XLSX round trips, hash checks, malformed-file tests, and Windows path tests.
 - **PASS standard:** Source bytes are unchanged; errors are explicit; all tests and quality checks pass.
 - **Entry to next phase:** Owner confirms the ingestion/profile evidence and unresolved format rules.
+- **Current delivery note:** The implementation is present as uncommitted changes after the Phase 0 baseline. Phase 2 statistics, CV rules, outlier handling, and curve fitting remain forbidden until acceptance.
 
 ## Phase 2 — QC and analysis-plan confirmation
 
@@ -81,4 +84,3 @@ Every phase ends with a written status review. A failed test, lint check, type c
 - **Test method:** End-to-end synthetic runs, UI tests, Windows smoke tests, security checks, and reproducibility checks.
 - **PASS standard:** Complete synthetic workflow is traceable, reversible where appropriate, and documented with known limitations.
 - **Entry to release:** Owner and scientific reviewer approve the release scope; no claim of production readiness is made without separate validation.
-
