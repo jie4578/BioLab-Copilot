@@ -1,0 +1,4 @@
+Empty-file fixture placeholder.
+
+The actual zero-byte file is intentionally not committed because some tooling skips or normalizes empty files. Phase 1 must test a zero-byte temporary file and report a blocking validation issue without modifying it.
+

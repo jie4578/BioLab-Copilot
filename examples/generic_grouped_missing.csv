@@ -1,0 +1,6 @@
+sample_id,group,measurement,replicate
+SYN-C-02,control,1.01,1
+SYN-C-02,control,,2
+SYN-T-02,treatment,1.38,1
+SYN-T-02,treatment,1.41,2
+

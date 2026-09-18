@@ -1,0 +1,84 @@
+# Phased implementation plan
+
+Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
+
+## Phase 0 — Foundation and contracts
+
+- **Goal:** Establish governance, stable data contracts, synthetic fixtures, and local development checks.
+- **Allowed modification:** `AGENTS.md`, project docs, `pyproject.toml`, package metadata, `contracts`, placeholders, tests for contracts, synthetic examples, and template tooling.
+- **Forbidden modification:** Runtime ingestion, profiling, QC execution, statistical calculations, curve fitting, chart generation, AI calls, report rendering, databases, LangChain, LLM SDKs, Gradio, and formal UI.
+- **Deliverables:** Versioned Pydantic models, enums, JSON Schema support, examples, XLSX template generator, MIT license, README, and quality configuration.
+- **Test method:** Contract round trips, schema checks, invalid-field checks, extra-field checks, and `pytest`, `ruff`, `mypy`.
+- **PASS standard:** All required checks pass; no business logic exists outside contracts.
+- **Entry to next phase:** Phase 0 status is `READY_FOR_PHASE_1_INGESTION` and the owner authorizes Phase 1.
+
+## Phase 1 — Read-only ingestion and profiling
+
+- **Goal:** Import CSV/XLSX bytes without mutation and produce basic dataset profiles.
+- **Allowed modification:** `ingestion`, `profiling`, related contracts, fixtures, and tests.
+- **Forbidden modification:** Scientific conclusions, automatic deletion/imputation, statistics, fitting, AI, reports, and UI.
+- **Deliverables:** Format/encoding handling, source hash preservation, profile output, and reviewable import errors.
+- **Test method:** Synthetic CSV/XLSX round trips, hash checks, malformed-file tests, and Windows path tests.
+- **PASS standard:** Source bytes are unchanged; errors are explicit; all tests and quality checks pass.
+- **Entry to next phase:** Owner confirms the ingestion/profile evidence and unresolved format rules.
+
+## Phase 2 — QC and analysis-plan confirmation
+
+- **Goal:** Add visible validation/QC and an explicit user-confirmed plan.
+- **Allowed modification:** assay validation boundaries, QC issue generation, plan proposal/confirmation, and tests.
+- **Forbidden modification:** Silent cleaning, automatic outlier removal, statistical inference, AI, reports, and unconfirmed execution.
+- **Deliverables:** Assay-independent issue model usage, two assay plan proposals, severity rules, and confirmation state transitions.
+- **Test method:** Missingness, high CV, header, range, and blocking-issue fixtures.
+- **PASS standard:** Every flag has location and suggested action; source data remains unchanged; unconfirmed plans cannot run.
+- **Entry to next phase:** Scientific rules for the two assays are reviewed and owner authorizes deterministic calculations.
+
+## Phase 3 — Deterministic statistics and ELISA curve fitting
+
+- **Goal:** Execute only confirmed plans with reproducible statistics for the two supported assays.
+- **Allowed modification:** `statistics`, assay implementations, scientific tests, and structured result contracts.
+- **Forbidden modification:** LLM-generated numbers, silent exclusions, arbitrary prompt code execution, and report/UI work.
+- **Deliverables:** Documented grouped statistics, replicate CV handling, 4PL/5PL decision and implementation if approved, and over-range warnings.
+- **Test method:** Hand-calculated synthetic fixtures, regression tests, edge cases, and independent review of assumptions.
+- **PASS standard:** Same inputs/configuration produce identical numbers; invalid/out-of-range cases are explicit; no unsupported extrapolation is hidden.
+- **Entry to next phase:** Scientific reviewer signs off on formulas, tolerances, and test evidence.
+
+## Phase 4 — Visualization and batch orchestration
+
+- **Goal:** Render charts from structured results and support isolated batch runs.
+- **Allowed modification:** `visualization`, `batch`, artifact metadata, and tests.
+- **Forbidden modification:** Recomputing statistics in chart code, mutating input data, AI, and report narrative.
+- **Deliverables:** Reproducible chart artifacts, batch isolation, and artifact hashes.
+- **Test method:** Golden metadata tests, deterministic chart-data tests, and failure isolation tests.
+- **PASS standard:** Charts trace to result IDs and source hashes; one failed run does not corrupt another.
+- **Entry to next phase:** Artifact provenance and visual QA are accepted.
+
+## Phase 5 — Audit and Word/Excel/JSON reporting
+
+- **Goal:** Produce reviewable reports from manifests and derived artifacts.
+- **Allowed modification:** `audit`, `reporting`, templates, and tests.
+- **Forbidden modification:** Changing scientific results during rendering, hiding warnings, AI calls, and UI-specific business rules.
+- **Deliverables:** Complete run manifest, JSON export, XLSX report, DOCX report, and warning/assumption sections.
+- **Test method:** Schema validation, hash/provenance tests, report extraction tests, and rendered visual QA.
+- **PASS standard:** Reports identify source hashes, configuration, software versions, warnings, and status.
+- **Entry to next phase:** Report reviewer confirms traceability and readable failure states.
+
+## Phase 6 — Optional constrained AI interpretation
+
+- **Goal:** Add an optional narrative layer over structured deterministic results.
+- **Allowed modification:** `ai` adapter, prompts, redaction policy, and tests using mocked providers.
+- **Forbidden modification:** Direct data-frame/statistical execution by LLM, source deletion, conclusion mutation, mandatory network dependency, or secret leakage.
+- **Deliverables:** Provider-neutral interface, structured input envelope, grounded narrative schema, and offline fallback.
+- **Test method:** Mocked provider tests, prompt-injection tests, unavailable-provider tests, and provenance checks.
+- **PASS standard:** AI can be disabled with no loss of core analysis; generated text is labeled and cannot alter numbers.
+- **Entry to next phase:** Privacy, security, and scientific review approve the adapter boundary.
+
+## Phase 7 — Formal UI, integration, and release hardening
+
+- **Goal:** Expose the controlled workflow through a maintainable Windows-compatible UI and prepare a reviewed release.
+- **Allowed modification:** `ui`, packaging, usability, accessibility, integration tests, and release documentation.
+- **Forbidden modification:** Bypassing phase gates, hiding provenance/QC, weakening contracts, or introducing unreviewed assay rules.
+- **Deliverables:** User workflow, localization boundary, packaging, support guidance, and release checklist.
+- **Test method:** End-to-end synthetic runs, UI tests, Windows smoke tests, security checks, and reproducibility checks.
+- **PASS standard:** Complete synthetic workflow is traceable, reversible where appropriate, and documented with known limitations.
+- **Entry to release:** Owner and scientific reviewer approve the release scope; no claim of production readiness is made without separate validation.
+

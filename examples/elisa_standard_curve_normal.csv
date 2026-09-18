@@ -1,0 +1,8 @@
+sample_id,sample_type,group,standard_concentration,measurement,replicate,unit
+STD-01,standard,,0.10,0.08,1,ng/mL
+STD-02,standard,,0.50,0.31,1,ng/mL
+STD-03,standard,,2.00,0.77,1,ng/mL
+STD-04,standard,,10.00,1.24,1,ng/mL
+SYN-U-01,sample,sample-A,,0.58,1,ng/mL
+SYN-U-02,sample,sample-B,,1.02,1,ng/mL
+
