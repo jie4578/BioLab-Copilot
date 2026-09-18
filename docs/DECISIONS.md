@@ -55,3 +55,17 @@
 - **Context:** CSV quoting, Excel formulas, macros, malformed ZIP content, and oversized workbooks can create ambiguity or resource risk.
 - **Decision:** Use strict CSV parsing with explicit encoding/delimiter, `openpyxl` read-only formula-preserving mode for `.xlsx`, disabled links/macros, explicit sheet selection for multi-sheet workbooks, SHA-256 before/after checks, and configurable file/row/uncompressed-size limits.
 - **Consequences:** Some inputs require a reviewed export or explicit user options. Cached formula values are never treated as scientific source values.
+
+## ADR-009: Keep Phase 2A statistics at the measurement-row level
+
+- **Status:** Accepted for Phase 2A
+- **Context:** Phase 1 preserves biological, technical, unknown, and duplicate records but does not have enough design information to establish independent biological samples or pairing.
+- **Decision:** Phase 2A computes only `n_measurements`, mean, median, min, max, and sample standard deviation (`ddof=1`) separately for each `generic_grouped` group. `independent_biological_n` remains `null`. Technical repeats, unknown repeats, duplicate records, and all source records remain unaggregated.
+- **Consequences:** The output is useful for transparent distribution description without implying inferential validity. A later phase must review experimental design before choosing tests, aggregation, pairing, or biological sample units.
+
+## ADR-010: Require explicit plan-file and hash confirmation before Phase 2A execution
+
+- **Status:** Accepted for Phase 2A
+- **Context:** A generated plan is a proposal, and either its configuration or its Phase 1 import artifact can change after generation. Silent reuse would undermine reproducibility and user review.
+- **Decision:** Plan generation writes `confirmed=false`, binds the import-artifact SHA-256, source SHA-256, mapping, parser configuration, unit, analysis level, statistic set, and preservation policies. Execution requires `confirmed=true`, an explicit matching plan-file SHA-256, matching input-artifact hash, and explicit confirmation fields for duplicate-record, unknown-repeat, and single-group warnings when present.
+- **Consequences:** Users must review and edit a small JSON plan before execution. There is no approval service or default “confirm all” shortcut. A changed plan or input artifact invalidates the prior confirmation.

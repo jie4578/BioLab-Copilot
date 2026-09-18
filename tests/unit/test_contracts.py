@@ -11,6 +11,7 @@ from biolab_copilot.contracts import (
     ChartArtifact,
     DatasetProfile,
     ExperimentSpec,
+    GroupDescriptiveStats,
     ReportArtifact,
     RunManifest,
     RunStatus,
@@ -150,3 +151,46 @@ def test_run_status_contains_required_lifecycle_values() -> None:
         "PARTIAL",
         "FAILED",
     }
+
+
+def test_phase2a_contracts_round_trip_and_reject_non_finite_group_values() -> None:
+    stats = GroupDescriptiveStats(
+        group="control",
+        n_measurements=2,
+        mean=2.0,
+        median=2.0,
+        min=1.0,
+        max=3.0,
+        sample_sd=2**0.5,
+        source_record_numbers=[1, 2],
+    )
+    plan = AnalysisPlan(
+        plan_id="plan-001",
+        experiment_id="exp-001",
+        assay_type="generic_grouped",
+        objectives=["Describe preserved measurement rows."],
+        analysis_level="measurement_rows",
+        statistics=["n_measurements", "mean", "median", "min", "max", "sample_sd"],
+        sample_sd_ddof=1,
+        duplicate_record_policy="retain_and_include_all",
+        required_confirmations=["DUPLICATE_COMPLETE_RECORD"],
+        warning_confirmations={"DUPLICATE_COMPLETE_RECORD": True},
+        confirmed=True,
+        input_artifact_sha256=SHA256,
+        source_sha256=SHA256,
+    )
+
+    assert GroupDescriptiveStats.model_validate_json(stats.model_dump_json()) == stats
+    assert AnalysisPlan.model_validate_json(plan.model_dump_json()) == plan
+    assert "group_statistics" in AnalysisResult.model_json_schema()["properties"]
+
+    with pytest.raises(ValidationError):
+        GroupDescriptiveStats(
+            group="control",
+            n_measurements=2,
+            mean=float("nan"),
+            median=2.0,
+            min=1.0,
+            max=3.0,
+            source_record_numbers=[1, 2],
+        )

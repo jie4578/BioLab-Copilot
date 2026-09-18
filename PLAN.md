@@ -2,7 +2,9 @@
 
 Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
 
-Current delivery: Phase 1 implementation is complete in the working tree and remains uncommitted pending owner acceptance. Phase 2 has not started.
+Current delivery: Phase 1 is committed as `4bb5e06`. Phase 2A implementation is complete in
+the working tree and remains uncommitted pending owner acceptance. Phase 2B and all later phases
+have not started.
 
 ## Phase 0 — Foundation and contracts
 
@@ -33,7 +35,27 @@ Current delivery: Phase 1 implementation is complete in the working tree and rem
 - **Deliverables:** Assay-independent issue model usage, two assay plan proposals, severity rules, and confirmation state transitions.
 - **Test method:** Missingness, high CV, header, range, and blocking-issue fixtures.
 - **PASS standard:** Every flag has location and suggested action; source data remains unchanged; unconfirmed plans cannot run.
-- **Entry to next phase:** Scientific rules for the two assays are reviewed and owner authorizes deterministic calculations.
+- **Entry to next phase:** Scientific rules for the two assays are reviewed and the owner authorizes the relevant deterministic calculation subphase.
+
+### Phase 2A — Generic grouped descriptive statistics and explicit plan confirmation
+
+- **Goal:** Execute a user-confirmed, traceable descriptive plan for `generic_grouped` measurement rows only.
+- **Allowed modification:** `contracts`, `statistics`, offline CLI plan generation/execution, descriptive-statistics tests, and Phase 2A documentation.
+- **Forbidden modification:** ELISA processing or fitting; t tests, ANOVA, non-parametric tests, normality or variance tests, p-values, effect sizes, SEM, confidence intervals, CV, technical-repeat aggregation, pairing, biological-sample inference, outlier deletion, imputation, transformation, unit conversion, charts, reports, AI, network, database, or UI.
+- **Deliverables:** Explicit `AnalysisPlan`; plan-file and SHA-256 confirmation; deterministic grouped `AnalysisResult`; warning confirmation; independent run artifacts; failure diagnostics; no `NaN` or `Infinity` JSON.
+- **Test method:** Independent hand-calculated expectations for `[1,2,3]`, `[4,4,4]`, `[1,3]`, singleton groups, negative/zero values, multiple groups, repeat preservation, plan/input binding, QC blocking, ELISA rejection, overflow, and CLI exit codes.
+- **PASS standard:** Only confirmed, hash-bound, analysis-ready `generic_grouped` inputs execute; all six fixed descriptive fields are reproducible; `sample_sd` uses `ddof=1`; `independent_biological_n=null`; source and Phase 1 artifacts remain unchanged.
+- **Entry to next phase:** Owner accepts the Phase 2A evidence and explicitly authorizes Phase 2B inferential design. This implementation must remain uncommitted until acceptance.
+
+### Phase 2B — Inferential design (future, not started)
+
+- **Goal:** Review and specify whether any inferential analyses are scientifically appropriate for the supported experiment designs.
+- **Allowed modification:** Future design documentation, reviewed assumptions, and tests for approved inferential contracts.
+- **Forbidden modification:** Any implementation of inferential statistics, p-values, tests, ELISA fitting, charts, AI, reports, UI, or silent repeat aggregation before explicit authorization.
+- **Deliverables:** Owner- and scientific-reviewer-approved inferential design decisions only.
+- **Test method:** Future design review and synthetic contract tests after authorization.
+- **PASS standard:** No unsupported inferential rule is implemented or implied; repeat and independence assumptions are explicit.
+- **Entry to next phase:** Scientific reviewer and owner approve the design and authorize implementation.
 
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 

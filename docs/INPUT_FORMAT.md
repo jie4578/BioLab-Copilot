@@ -65,3 +65,6 @@ The importer preserves raw source values, parsed canonical values, source locati
 
 `analysis_ready=false` whenever any `error` or `blocking` issue exists, including invalid required values, unsupported categorical values, mixed units, formula cells in mapped fields, missing standard concentrations, or structural mapping failures. Diagnostics and all read records remain available even when analysis is not ready.
 
+For Phase 2A, this flag means only that the Phase 1 import and structural QC passed. It does not
+mean that observations are biologically independent, that a design is suitable for inference, or
+that any later statistical conclusion is valid.

@@ -13,10 +13,13 @@ from pathlib import Path
 from typing import Any
 
 import openpyxl
+import pydantic
 
 from biolab_copilot import __version__
 from biolab_copilot.assays import suggest_column_mapping
 from biolab_copilot.contracts import (
+    AnalysisPlan,
+    AnalysisResult,
     ArtifactFile,
     DatasetProfile,
     ImportResult,
@@ -34,6 +37,11 @@ from biolab_copilot.ingestion import (
     sha256_file,
 )
 from biolab_copilot.profiling import profile_and_validate
+from biolab_copilot.statistics import (
+    build_analysis_plan,
+    compute_grouped_descriptive,
+    validate_execution_inputs,
+)
 
 EXIT_OK = 0
 EXIT_QC_ERRORS = 2
@@ -81,7 +89,8 @@ def _limits_from_args(args: argparse.Namespace) -> ReaderLimits:
 
 def _write_json(path: Path, value: Any) -> None:
     path.write_text(
-        json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
     )
 
 
@@ -278,6 +287,23 @@ def _build_parser() -> argparse.ArgumentParser:
     import_parser.add_argument("--delimiter", default=",")
     import_parser.add_argument("--output-dir", default="runs")
     _add_common_reader_options(import_parser)
+
+    plan_parser = subparsers.add_parser(
+        "generate-plan",
+        aliases=["plan"],
+        help="Generate an unconfirmed generic_grouped Phase 2A analysis plan",
+    )
+    plan_parser.add_argument("input_artifact")
+    plan_parser.add_argument("--output-dir", default="outputs/phase2a-plans")
+
+    execute_parser = subparsers.add_parser(
+        "execute-plan",
+        aliases=["execute"],
+        help="Execute a confirmed generic_grouped Phase 2A analysis plan",
+    )
+    execute_parser.add_argument("plan_file")
+    execute_parser.add_argument("--confirm-plan-sha256", required=True)
+    execute_parser.add_argument("--output-dir", default="outputs/phase2a")
     return parser
 
 
@@ -426,6 +452,240 @@ def _run_import(args: argparse.Namespace) -> int:
         return EXIT_FATAL
 
 
+def _phase2a_issue(code: str, message: str, suggested_action: str) -> ValidationIssue:
+    return ValidationIssue(
+        code=code,
+        severity=IssueSeverity.BLOCKING,
+        message=message,
+        location="cli",
+        suggested_action=suggested_action,
+    )
+
+
+def _load_import_artifact_for_plan(path: Path) -> ImportResult:
+    return ImportResult.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def _run_generate_plan(args: argparse.Namespace) -> int:
+    try:
+        input_path = _path_inside_project(args.input_artifact)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root == input_path.parent:
+            raise ValueError(
+                "Plan output directory must be separate from the input artifact directory."
+            )
+        import_result = _load_import_artifact_for_plan(input_path)
+        if import_result.experiment_type != "generic_grouped":
+            raise ValueError("Phase 2A plan generation supports only generic_grouped.")
+        plan = build_analysis_plan(input_path, import_result)
+        run_id, run_dir = _run_directory(output_root)
+        plan_path = run_dir / "analysis_plan.json"
+        _write_json(plan_path, plan.model_dump(mode="json"))
+        plan_hash = sha256_file(plan_path)
+        print(
+            json.dumps(
+                {
+                    "plan_id": plan.plan_id,
+                    "plan_path": str(plan_path.resolve()),
+                    "plan_sha256": plan_hash,
+                    "confirmed": plan.confirmed,
+                    "required_confirmations": plan.required_confirmations,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return EXIT_OK
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "PLAN_GENERATION_FAILED",
+            str(exc),
+            (
+                "Use an unchanged generic_grouped imported_data.json artifact and a separate "
+                "output directory."
+            ),
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
+def _phase2a_failed_result(
+    plan: AnalysisPlan,
+    plan_sha256: str,
+    issues: list[ValidationIssue],
+    import_result: ImportResult | None,
+) -> AnalysisResult:
+    return AnalysisResult(
+        result_id=f"result-{uuid.uuid4().hex[:12]}",
+        experiment_id=plan.experiment_id,
+        plan_id=plan.plan_id,
+        status="failed",
+        issues=issues,
+        analysis_level="measurement_rows",
+        declared_units=plan.declared_units,
+        independent_biological_n=None,
+        input_artifact_sha256=plan.input_artifact_sha256,
+        source_sha256=(
+            import_result.input_file.sha256
+            if import_result is not None
+            else plan.source_sha256
+        ),
+        confirmed_plan_sha256=plan_sha256,
+        statistical_limitations=[
+            "No successful statistics were produced because execution preflight failed.",
+            "independent_biological_n is not determined in Phase 2A and remains null.",
+        ],
+    )
+
+
+def _write_phase2a_outputs(
+    *,
+    plan_bytes: bytes,
+    plan: AnalysisPlan,
+    result: AnalysisResult,
+    issues: list[ValidationIssue],
+    plan_sha256: str,
+    run_id: str,
+    run_dir: Path,
+    started_at: datetime,
+    finished_at: datetime,
+    configuration: dict[str, Any],
+    import_result: ImportResult | None,
+) -> None:
+    plan_path = run_dir / "analysis_plan.json"
+    plan_path.write_bytes(plan_bytes)
+    result_path = run_dir / "analysis_result.json"
+    issues_path = run_dir / "analysis_issues.json"
+    _write_json(result_path, result.model_dump(mode="json"))
+    _write_json(issues_path, _issue_payload(issues))
+    artifacts = [
+        _output_file(plan_path, "analysis_plan"),
+        _output_file(result_path, "analysis_result"),
+        _output_file(issues_path, "analysis_issues"),
+    ]
+    manifest = RunManifest(
+        run_id=run_id,
+        experiment_id=plan.experiment_id,
+        status=RunStatus.COMPLETED if result.status == "computed" else RunStatus.FAILED,
+        input_files=[import_result.input_file] if import_result is not None else [],
+        configuration=configuration,
+        software_versions={
+            "biolab_copilot": __version__,
+            "python": platform.python_version(),
+            "pydantic": pydantic.__version__,
+            "statistics_implementation": "phase2a-descriptive-v1",
+        },
+        warnings=[issue for issue in issues if issue.severity == IssueSeverity.WARNING],
+        created_at=started_at,
+        started_at=started_at,
+        finished_at=finished_at,
+        assay_type=plan.assay_type,
+        column_mapping=plan.column_mapping,
+        parse_configuration=plan.configuration,
+        output_files=artifacts,
+        analysis_ready=result.status == "computed",
+        analysis_level="measurement_rows",
+        input_artifact_sha256=plan.input_artifact_sha256,
+        source_sha256=(
+            import_result.input_file.sha256
+            if import_result is not None
+            else plan.source_sha256
+        ),
+        analysis_plan_sha256=plan_sha256,
+    )
+    _write_json(run_dir / "run_manifest.json", manifest.model_dump(mode="json"))
+
+
+def _run_execute_plan(args: argparse.Namespace) -> int:
+    started_at = datetime.now(UTC)
+    try:
+        plan_path = _path_inside_project(args.plan_file)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root == plan_path.parent:
+            raise ValueError("Analysis output directory must be separate from the plan directory.")
+        run_id, run_dir = _run_directory(output_root)
+        plan_bytes = plan_path.read_bytes()
+        preflight = validate_execution_inputs(
+            plan_path,
+            args.confirm_plan_sha256,
+            allowed_root=_project_root(),
+        )
+        plan = preflight.plan
+        import_result = preflight.import_result
+        all_issues = [
+            *(import_result.validation_issues if import_result is not None else []),
+            *preflight.issues,
+        ]
+        if preflight.issues:
+            result = _phase2a_failed_result(
+                plan, preflight.plan_sha256, all_issues, import_result
+            )
+        elif import_result is None:  # pragma: no cover - guarded by preflight issues
+            result = _phase2a_failed_result(
+                plan,
+                preflight.plan_sha256,
+                [
+                    _phase2a_issue(
+                        "INPUT_ARTIFACT_INVALID",
+                        "No validated import artifact is available for execution.",
+                        "Regenerate the plan from an unchanged Phase 1 import artifact.",
+                    )
+                ],
+                None,
+            )
+            all_issues = result.issues
+        else:
+            result = compute_grouped_descriptive(
+                import_result,
+                plan,
+                preflight.plan_sha256,
+            )
+            all_issues = result.issues
+        finished_at = datetime.now(UTC)
+        _write_phase2a_outputs(
+            plan_bytes=plan_bytes,
+            plan=plan,
+            result=result,
+            issues=all_issues,
+            plan_sha256=preflight.plan_sha256,
+            run_id=run_id,
+            run_dir=run_dir,
+            started_at=started_at,
+            finished_at=finished_at,
+            configuration={
+                "command": "execute-plan",
+                "plan_path": str(plan_path),
+                "confirmed_plan_sha256": args.confirm_plan_sha256,
+            },
+            import_result=import_result,
+        )
+        _print_issues(all_issues)
+        print(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "run_dir": str(run_dir.resolve()),
+                    "status": result.status,
+                    "analysis_ready": result.status == "computed",
+                    "plan_sha256": preflight.plan_sha256,
+                },
+                indent=2,
+            )
+        )
+        return EXIT_OK if result.status == "computed" else EXIT_QC_ERRORS
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "EXECUTION_FAILED",
+            str(exc),
+            (
+                "Verify the plan path, explicit plan hash, and separate project-local output "
+                "directory."
+            ),
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "list-sheets":
@@ -434,6 +694,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_suggest_mapping(args)
     if args.command == "import":
         return _run_import(args)
+    if args.command in {"generate-plan", "plan"}:
+        return _run_generate_plan(args)
+    if args.command in {"execute-plan", "execute"}:
+        return _run_execute_plan(args)
     return EXIT_FATAL
 
 
