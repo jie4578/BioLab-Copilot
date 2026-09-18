@@ -1,4 +1,4 @@
-"""Offline command-line interface for Phase 1 import and structural QC."""
+"""Offline command-line interface for import, QC, and confirmed statistics."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from typing import Any
 
 import openpyxl
 import pydantic
+import scipy
 
 from biolab_copilot import __version__
 from biolab_copilot.assays import suggest_column_mapping
@@ -22,6 +23,7 @@ from biolab_copilot.contracts import (
     AnalysisResult,
     ArtifactFile,
     DatasetProfile,
+    ExperimentalUnitsPreview,
     ImportResult,
     InputFile,
     IssueSeverity,
@@ -39,8 +41,11 @@ from biolab_copilot.ingestion import (
 from biolab_copilot.profiling import profile_and_validate
 from biolab_copilot.statistics import (
     build_analysis_plan,
+    build_welch_plan,
     compute_grouped_descriptive,
+    compute_welch_result,
     validate_execution_inputs,
+    validate_welch_execution_inputs,
 )
 
 EXIT_OK = 0
@@ -248,7 +253,7 @@ def _add_common_reader_options(parser: argparse.ArgumentParser) -> None:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="biolab-copilot", description="Offline BioLab Copilot Phase 1 tools"
+        prog="biolab-copilot", description="Offline BioLab Copilot import and statistics tools"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -304,6 +309,24 @@ def _build_parser() -> argparse.ArgumentParser:
     execute_parser.add_argument("plan_file")
     execute_parser.add_argument("--confirm-plan-sha256", required=True)
     execute_parser.add_argument("--output-dir", default="outputs/phase2a")
+
+    welch_plan_parser = subparsers.add_parser(
+        "generate-welch-plan",
+        aliases=["welch-plan"],
+        help="Generate an unconfirmed Phase 2B two-group Welch plan and unit preview",
+    )
+    welch_plan_parser.add_argument("input_artifact")
+    welch_plan_parser.add_argument("--design-file", required=True)
+    welch_plan_parser.add_argument("--output-dir", default="outputs/phase2b-plans")
+
+    welch_execute_parser = subparsers.add_parser(
+        "execute-welch",
+        aliases=["execute-inferential"],
+        help="Execute a confirmed Phase 2B two-group Welch plan",
+    )
+    welch_execute_parser.add_argument("plan_file")
+    welch_execute_parser.add_argument("--confirm-plan-sha256", required=True)
+    welch_execute_parser.add_argument("--output-dir", default="outputs/phase2b")
     return parser
 
 
@@ -526,9 +549,7 @@ def _phase2a_failed_result(
         independent_biological_n=None,
         input_artifact_sha256=plan.input_artifact_sha256,
         source_sha256=(
-            import_result.input_file.sha256
-            if import_result is not None
-            else plan.source_sha256
+            import_result.input_file.sha256 if import_result is not None else plan.source_sha256
         ),
         confirmed_plan_sha256=plan_sha256,
         statistical_limitations=[
@@ -587,9 +608,7 @@ def _write_phase2a_outputs(
         analysis_level="measurement_rows",
         input_artifact_sha256=plan.input_artifact_sha256,
         source_sha256=(
-            import_result.input_file.sha256
-            if import_result is not None
-            else plan.source_sha256
+            import_result.input_file.sha256 if import_result is not None else plan.source_sha256
         ),
         analysis_plan_sha256=plan_sha256,
     )
@@ -617,9 +636,7 @@ def _run_execute_plan(args: argparse.Namespace) -> int:
             *preflight.issues,
         ]
         if preflight.issues:
-            result = _phase2a_failed_result(
-                plan, preflight.plan_sha256, all_issues, import_result
-            )
+            result = _phase2a_failed_result(plan, preflight.plan_sha256, all_issues, import_result)
         elif import_result is None:  # pragma: no cover - guarded by preflight issues
             result = _phase2a_failed_result(
                 plan,
@@ -686,6 +703,209 @@ def _run_execute_plan(args: argparse.Namespace) -> int:
         return EXIT_QC_ERRORS
 
 
+def _run_generate_welch_plan(args: argparse.Namespace) -> int:
+    """Generate a Phase 2B plan and a deterministic experimental-unit preview."""
+
+    try:
+        input_path = _path_inside_project(args.input_artifact)
+        design_path = _path_inside_project(args.design_file)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root in {input_path.parent, design_path.parent}:
+            raise ValueError(
+                "Phase 2B plan output must be separate from the input artifact and design file."
+            )
+        run_id, run_dir = _run_directory(output_root)
+        preview_path = run_dir / "experimental_units.json"
+        build = build_welch_plan(input_path, design_path, preview_path)
+        _write_json(preview_path, build.preview.model_dump(mode="json"))
+        preview_sha256 = sha256_file(preview_path)
+        plan = build.plan.model_copy(update={"preview_sha256": preview_sha256})
+        plan_path = run_dir / "analysis_plan.json"
+        _write_json(plan_path, plan.model_dump(mode="json"))
+        plan_sha256 = sha256_file(plan_path)
+        _print_issues(list(build.issues))
+        print(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "plan_id": plan.plan_id,
+                    "plan_path": str(plan_path.resolve()),
+                    "plan_sha256": plan_sha256,
+                    "preview_path": str(preview_path.resolve()),
+                    "preview_sha256": preview_sha256,
+                    "preview_ready": build.preview.preview_ready,
+                    "confirmed": plan.confirmed,
+                    "required_confirmations": plan.required_confirmations,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return (
+            EXIT_OK
+            if not any(
+                issue.severity in {IssueSeverity.ERROR, IssueSeverity.BLOCKING}
+                for issue in build.issues
+            )
+            else EXIT_QC_ERRORS
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "WELCH_PLAN_GENERATION_FAILED",
+            str(exc),
+            (
+                "Use a project-local Phase 1 import artifact, explicit design file, "
+                "and separate output directory."
+            ),
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
+def _write_phase2b_outputs(
+    *,
+    plan_bytes: bytes,
+    plan: AnalysisPlan,
+    preview: ExperimentalUnitsPreview | None,
+    result: AnalysisResult,
+    issues: list[ValidationIssue],
+    plan_sha256: str,
+    run_id: str,
+    run_dir: Path,
+    started_at: datetime,
+    finished_at: datetime,
+    configuration: dict[str, Any],
+    import_result: ImportResult | None,
+) -> None:
+    plan_path = run_dir / "analysis_plan.json"
+    plan_path.write_bytes(plan_bytes)
+    preview_path = run_dir / "experimental_units.json"
+    if preview is not None:
+        _write_json(preview_path, preview.model_dump(mode="json"))
+    else:
+        _write_json(
+            preview_path,
+            {
+                "schema_version": "1.0",
+                "preview_ready": False,
+                "blocking_reasons": _issue_payload(issues),
+            },
+        )
+    result_path = run_dir / "analysis_result.json"
+    issues_path = run_dir / "analysis_issues.json"
+    _write_json(result_path, result.model_dump(mode="json"))
+    _write_json(issues_path, _issue_payload(issues))
+    artifacts = [
+        _output_file(plan_path, "analysis_plan"),
+        _output_file(preview_path, "experimental_units"),
+        _output_file(result_path, "analysis_result"),
+        _output_file(issues_path, "analysis_issues"),
+    ]
+    manifest = RunManifest(
+        run_id=run_id,
+        experiment_id=plan.experiment_id,
+        status=RunStatus.COMPLETED if result.status == "computed" else RunStatus.FAILED,
+        input_files=[import_result.input_file] if import_result is not None else [],
+        configuration=configuration,
+        software_versions={
+            "biolab_copilot": __version__,
+            "python": platform.python_version(),
+            "pydantic": pydantic.__version__,
+            "scipy": scipy.__version__,
+            "statistics_implementation": "phase2b-welch-v1",
+        },
+        warnings=[issue for issue in issues if issue.severity == IssueSeverity.WARNING],
+        created_at=started_at,
+        started_at=started_at,
+        finished_at=finished_at,
+        assay_type=plan.assay_type,
+        column_mapping=plan.column_mapping,
+        parse_configuration=plan.configuration,
+        output_files=artifacts,
+        analysis_ready=result.status == "computed",
+        analysis_level="experimental_units",
+        input_artifact_sha256=plan.input_artifact_sha256,
+        source_sha256=(
+            import_result.input_file.sha256 if import_result is not None else plan.source_sha256
+        ),
+        analysis_plan_sha256=plan_sha256,
+        preview_sha256=plan.preview_sha256,
+        method=plan.method,
+        independence_status=result.independence_status,
+    )
+    _write_json(run_dir / "run_manifest.json", manifest.model_dump(mode="json"))
+
+
+def _run_execute_welch(args: argparse.Namespace) -> int:
+    """Execute only a fully confirmed and revalidated Phase 2B plan."""
+
+    started_at = datetime.now(UTC)
+    try:
+        plan_path = _path_inside_project(args.plan_file)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root == plan_path.parent:
+            raise ValueError("Phase 2B output must be separate from the plan directory.")
+        run_id, run_dir = _run_directory(output_root)
+        plan_bytes = plan_path.read_bytes()
+        preflight = validate_welch_execution_inputs(
+            plan_path,
+            args.confirm_plan_sha256,
+            allowed_root=_project_root(),
+        )
+        result = compute_welch_result(preflight)
+        import_result = preflight.import_result
+        issues = [
+            *(import_result.validation_issues if import_result is not None else []),
+            *preflight.issues,
+        ]
+        if result.status == "computed":
+            issues = result.issues
+        finished_at = datetime.now(UTC)
+        _write_phase2b_outputs(
+            plan_bytes=plan_bytes,
+            plan=preflight.plan,
+            preview=preflight.preview,
+            result=result,
+            issues=issues,
+            plan_sha256=preflight.plan_sha256,
+            run_id=run_id,
+            run_dir=run_dir,
+            started_at=started_at,
+            finished_at=finished_at,
+            configuration={
+                "command": "execute-welch",
+                "plan_path": str(plan_path),
+                "confirmed_plan_sha256": args.confirm_plan_sha256,
+            },
+            import_result=import_result,
+        )
+        _print_issues(issues)
+        print(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "run_dir": str(run_dir.resolve()),
+                    "status": result.status,
+                    "analysis_ready": result.status == "computed",
+                    "plan_sha256": preflight.plan_sha256,
+                },
+                indent=2,
+            )
+        )
+        return EXIT_OK if result.status == "computed" else EXIT_QC_ERRORS
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "WELCH_EXECUTION_FAILED",
+            str(exc),
+            (
+                "Verify the plan path, explicit plan hash, and separate project-local "
+                "output directory."
+            ),
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "list-sheets":
@@ -698,6 +918,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_generate_plan(args)
     if args.command in {"execute-plan", "execute"}:
         return _run_execute_plan(args)
+    if args.command in {"generate-welch-plan", "welch-plan"}:
+        return _run_generate_welch_plan(args)
+    if args.command in {"execute-welch", "execute-inferential"}:
+        return _run_execute_welch(args)
     return EXIT_FATAL
 
 

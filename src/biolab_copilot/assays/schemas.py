@@ -26,6 +26,7 @@ GENERIC_GROUPED_SCHEMA = AssayFieldSchema(
     required_fields=("sample_id", "group", "measurement"),
     optional_fields=(
         "unit",
+        "experimental_unit_id",
         "replicate_id",
         "replicate_type",
         "biological_replicate_id",
@@ -34,6 +35,7 @@ GENERIC_GROUPED_SCHEMA = AssayFieldSchema(
     numeric_fields=("measurement",),
     identifier_fields=(
         "sample_id",
+        "experimental_unit_id",
         "replicate_id",
         "biological_replicate_id",
         "technical_replicate_id",

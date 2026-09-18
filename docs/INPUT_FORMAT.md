@@ -17,6 +17,7 @@ Optional canonical fields:
 | Field | Type | Rule |
 | --- | --- | --- |
 | `unit` | text | Declared unit for the mapped measurement field; mixed units are an error |
+| `experimental_unit_id` | text identifier | Optional Phase 2B design field; must be explicitly mapped and supplied for every inferential record |
 | `replicate_id` | text identifier | Preserved without aggregation |
 | `replicate_type` | `biological`, `technical`, or `unknown` | Missing information is represented as `unknown` and warned |
 | `biological_replicate_id` | text identifier | Optional design metadata; never inferred |
@@ -68,3 +69,32 @@ The importer preserves raw source values, parsed canonical values, source locati
 For Phase 2A, this flag means only that the Phase 1 import and structural QC passed. It does not
 mean that observations are biologically independent, that a design is suitable for inference, or
 that any later statistical conclusion is valid.
+
+## Phase 2B design input
+
+Phase 2B accepts only a `generic_grouped` artifact with one mapped `measurement` field and an
+explicit user-supplied design declaration. The declaration is a separate JSON object containing:
+
+| Field | Required value or type | Meaning |
+| --- | --- | --- |
+| `design_type` | `independent_two_group` | Restricted supported design |
+| `experimental_unit_id_field` | `experimental_unit_id` | Canonical field used to identify one experimental unit |
+| `group_a`, `group_b` | two different non-empty original group values | Planned comparison groups |
+| `technical_repeat_policy` | `none` or `mean` | Explicit record handling rule |
+| `method` | `welch_t` | Two-sided Welch comparison only |
+| `alternative` | `two-sided` | No one-sided alternative is accepted |
+| `alpha` | `0.05` | Fixed significance level for the comparison |
+| `confidence_level` | `0.95` | Fixed mean-difference interval level |
+| `independence_declared` | `true` | User declaration, not software verification |
+| `assumptions_acknowledged` | `true` | User acknowledgement of the stated assumptions |
+
+`biological_replicate_id` is not an experimental-unit declaration, and `sample_id` keeps its
+Phase 1 meaning. The software never derives unit IDs, pairing, independence, or biological
+sample size. Every participating row must have a non-empty unit ID, and one ID may not occur in
+both groups.
+
+With `technical_repeat_policy=none`, each unit must have exactly one measurement row. With
+`mean`, multiple rows require unique `technical_replicate_id` values and
+`replicate_type=technical` for that unit. Values are averaged arithmetically within a unit and
+each unit receives equal weight. All source rows and locations remain in the preview. Unknown
+repeat types are not converted to technical repeats.

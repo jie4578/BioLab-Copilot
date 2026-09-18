@@ -13,6 +13,7 @@ authors = [{ name = "BioLab Copilot contributors" }]
 dependencies = [
     "openpyxl>=3.1,<4",
     "pydantic>=2.6,<3",
+    "scipy>=1.16,<2",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +53,7 @@ files = ["src"]
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["openpyxl", "openpyxl.*"]
-# openpyxl has no installed type stubs in the offline runtime; our boundary code remains typed.
+module = ["openpyxl", "openpyxl.*", "scipy", "scipy.*"]
+# These scientific/boundary packages have no installed type stubs in the offline runtime.
+# The project code remains typed at the package boundary.
 ignore_missing_imports = true

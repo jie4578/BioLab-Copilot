@@ -12,6 +12,7 @@ from biolab_copilot.contracts import (
     DatasetProfile,
     ExperimentSpec,
     GroupDescriptiveStats,
+    IndependentTwoGroupDesign,
     ReportArtifact,
     RunManifest,
     RunStatus,
@@ -193,4 +194,46 @@ def test_phase2a_contracts_round_trip_and_reject_non_finite_group_values() -> No
             min=1.0,
             max=3.0,
             source_record_numbers=[1, 2],
+        )
+
+
+def test_phase2b_design_contract_is_explicit_and_phase2a_plan_remains_compatible() -> None:
+    design = IndependentTwoGroupDesign(
+        design_type="independent_two_group",
+        experimental_unit_description="One explicitly identified unit.",
+        experimental_unit_id_field="experimental_unit_id",
+        independence_declared=True,
+        independence_rationale="The user declares independent units.",
+        group_a="A",
+        group_b="B",
+        technical_repeat_policy="none",
+        method="welch_t",
+        alternative="two-sided",
+        alpha=0.05,
+        confidence_level=0.95,
+        assumptions_acknowledged=True,
+    )
+    assert IndependentTwoGroupDesign.model_validate_json(design.model_dump_json()) == design
+    schema = IndependentTwoGroupDesign.model_json_schema()
+    assert "experimental_unit_id_field" in schema["properties"]
+
+    phase2a_plan = AnalysisPlan(
+        plan_id="phase2a-plan",
+        experiment_id="exp-001",
+        assay_type="generic_grouped",
+        objectives=["Describe rows"],
+        analysis_level="measurement_rows",
+        statistics=["n_measurements", "mean", "median", "min", "max", "sample_sd"],
+    )
+    assert AnalysisPlan.model_validate_json(phase2a_plan.model_dump_json()) == phase2a_plan
+
+    with pytest.raises(ValidationError):
+        IndependentTwoGroupDesign(
+            **design.model_dump(exclude={"group_b"}),
+            group_b="A",
+        )
+    with pytest.raises(ValidationError):
+        IndependentTwoGroupDesign(
+            **design.model_dump(exclude={"alpha"}),
+            alpha=0.01,
         )

@@ -49,3 +49,33 @@ successful result with silently excluded rows.
 Phase 2A is not a scientific validation of assay design and does not produce p-values, tests,
 effect sizes, confidence intervals, CV, ELISA concentrations, or conclusions such as
 "statistically significant" or "independent samples".
+
+## Phase 2B restricted Welch comparison
+
+Phase 2B supports exactly one `generic_grouped` measurement endpoint, two explicitly named
+groups, and a user-declared `independent_two_group` design. The software records
+`independence_status=user_declared_not_verified`: a declaration is not evidence that the units
+are independent, and the software does not verify the scientific design. `experimental_unit_id`
+is required for every participating record. `biological_replicate_id` and `sample_id` are not
+silently reinterpreted as experimental units.
+
+The `none` policy requires exactly one measurement record per experimental unit. The `mean`
+policy is allowed only when the user has declared technical repeats, every repeated row has a
+unique within-unit `technical_replicate_id`, and `replicate_type=technical`. Within-unit values
+are combined by an arithmetic mean; each experimental unit then receives equal weight. All
+source record numbers and locations are retained. Different repeat counts generate a warning.
+No unknown repeat is converted, no row is deleted, and `independent_biological_n` remains
+`null`.
+
+The Welch calculation uses `scipy.stats.ttest_ind(a, b, equal_var=False,
+alternative="two-sided", nan_policy="raise")` on aggregated experimental-unit values. Each
+group reports measurement count, experimental-unit count, mean, and sample SD (`ddof=1`). The
+reported difference is `mean(group_a) - mean(group_b)` in the declared original unit. The 95%
+confidence interval uses the same direction and Welch standard error/degrees-of-freedom
+formula. A two-unit-per-group minimum is a computation precondition only; it is not a claim of
+sufficient sample size, power, normality, or scientifically valid independence.
+
+Both groups with zero variance, zero/non-finite standard error, overflow, non-finite SciPy
+outputs, and p-value underflow are failed runs. One zero-variance group may produce a finite
+result with an explicit warning. No p-value is described as the probability that the null is
+true, and no result is described as causal, efficacious, or statistically conclusive.

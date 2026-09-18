@@ -62,3 +62,11 @@ python scripts\generate_xlsx_templates.py
 - Phase 1 must not implement statistical tests, CV calculations, outlier detection or deletion, curve fitting, charts, AI/API calls, Word reports, databases, network behavior, or formal UI.
 - Keep raw source values and parsed values side by side with source locations. `analysis_ready=false` whenever an error or blocking issue exists.
 - Preserve biological, technical, and unknown repeat types. Never infer pairing, independence, sample size, units, or aggregate observations.
+
+## Phase 2B implementation boundary
+
+- Phase 2B is restricted to `generic_grouped`, one measurement endpoint, exactly two explicitly named groups, and one confirmed two-sided Welch comparison.
+- Require a separate explicit experimental-unit design declaration. `experimental_unit_id` is not inferred from `sample_id`, biological replicate metadata, repeat type, or observed values. Independence is recorded as user-declared and not software-verified.
+- `none` requires one measurement row per experimental unit. `mean` requires explicit technical-repeat declarations and unique `technical_replicate_id` values within each unit. All source rows and locations remain available in the preview.
+- Error/blocking QC, duplicate complete records, missing or cross-group unit IDs, unsupported designs, changed input/design/preview hashes, and unconfirmed plans block inference. Warnings remain visible and require explicit confirmation where listed by the plan.
+- Phase 2B must not add paired, repeated-measures, clustered, multi-group, multi-factor, batch, ELISA, chart, AI, report, database, network, or UI behavior. Do not enter any later phase after a failed quality check.

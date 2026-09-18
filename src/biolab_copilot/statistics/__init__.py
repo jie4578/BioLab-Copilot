@@ -1,4 +1,4 @@
-"""Phase 2A deterministic generic-grouped descriptive statistics."""
+"""Deterministic generic-grouped statistics for Phases 2A and 2B."""
 
 from .descriptive import STATISTICAL_LIMITATIONS, compute_grouped_descriptive
 from .plans import (
@@ -9,6 +9,15 @@ from .plans import (
     declared_measurement_units,
     required_confirmation_codes,
     validate_execution_inputs,
+)
+from .welch import (
+    WELCH_LIMITATIONS,
+    WelchExecutionPreflight,
+    WelchPlanBuild,
+    build_welch_plan,
+    compute_welch_result,
+    validate_welch_execution_inputs,
+    welch_software_versions,
 )
 
 __all__ = [
@@ -21,4 +30,11 @@ __all__ = [
     "declared_measurement_units",
     "required_confirmation_codes",
     "validate_execution_inputs",
+    "WELCH_LIMITATIONS",
+    "WelchExecutionPreflight",
+    "WelchPlanBuild",
+    "build_welch_plan",
+    "compute_welch_result",
+    "validate_welch_execution_inputs",
+    "welch_software_versions",
 ]

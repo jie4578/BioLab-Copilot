@@ -69,3 +69,18 @@
 - **Context:** A generated plan is a proposal, and either its configuration or its Phase 1 import artifact can change after generation. Silent reuse would undermine reproducibility and user review.
 - **Decision:** Plan generation writes `confirmed=false`, binds the import-artifact SHA-256, source SHA-256, mapping, parser configuration, unit, analysis level, statistic set, and preservation policies. Execution requires `confirmed=true`, an explicit matching plan-file SHA-256, matching input-artifact hash, and explicit confirmation fields for duplicate-record, unknown-repeat, and single-group warnings when present.
 - **Consequences:** Users must review and edit a small JSON plan before execution. There is no approval service or default “confirm all” shortcut. A changed plan or input artifact invalidates the prior confirmation.
+
+## ADR-011: Require a separate explicit experimental-unit design declaration for Phase 2B
+
+- **Status:** Accepted for Phase 2B
+- **Context:** A `sample_id`, biological-replicate identifier, repeat type, or observed data pattern cannot establish the scientific experimental unit or independence. Treating technical rows as independent would change the estimand and uncertainty.
+- **Decision:** Require a user-supplied `independent_two_group` declaration with two group names, an explicit `experimental_unit_id` field, independence rationale, repeat policy, method, alternative, alpha, confidence level, and acknowledged assumptions. Validate structure and identity consistency, but report independence as `user_declared_not_verified`.
+- **Compatibility:** The additive optional fields keep contract `schema_version=1.0`; existing Phase 1 and Phase 2A JSON remains deserializable. Phase 2B execution requires the new fields to be present and valid, without changing the meaning of older plans.
+- **Consequences:** Phase 2B is intentionally narrow. Missing, crossing, duplicated, or ambiguous unit identities block inference, while Phase 1 and Phase 2A preserve their original row-level behavior.
+
+## ADR-012: Bind the Phase 2B Welch calculation to a reviewable unit preview
+
+- **Status:** Accepted for Phase 2B
+- **Context:** Technical-repeat aggregation and group assignment are scientific decisions that must be visible before a test runs. A plan confirmation is not meaningful if the preview or input can change afterward.
+- **Decision:** Generate `experimental_units.json` before execution and bind its SHA-256, the Phase 1 import-artifact hash, design-file hash, mapping, and repeat policy into the plan. Recompute and compare the preview at execution. Use SciPy's supported Welch implementation with explicit two-sided settings and record its version.
+- **Consequences:** Users review the exact experimental-unit assignments and aggregation before confirming. Every unit is equally weighted after an explicit within-unit mean. Preview, input, design, or plan changes invalidate the confirmation; no fallback inferential method is selected automatically.

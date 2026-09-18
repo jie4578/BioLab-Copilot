@@ -2,9 +2,9 @@
 
 Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
 
-Current delivery: Phase 1 is committed as `4bb5e06`. Phase 2A implementation is complete in
-the working tree and remains uncommitted pending owner acceptance. Phase 2B and all later phases
-have not started.
+Current delivery: Phase 1 is committed as `4bb5e06`; Phase 2A is committed as `1b5cd90`; and
+Phase 2B implementation is complete in the working tree and remains uncommitted pending owner
+acceptance. Later phases have not started.
 
 ## Phase 0 — Foundation and contracts
 
@@ -47,15 +47,15 @@ have not started.
 - **PASS standard:** Only confirmed, hash-bound, analysis-ready `generic_grouped` inputs execute; all six fixed descriptive fields are reproducible; `sample_sd` uses `ddof=1`; `independent_biological_n=null`; source and Phase 1 artifacts remain unchanged.
 - **Entry to next phase:** Owner accepts the Phase 2A evidence and explicitly authorizes Phase 2B inferential design. This implementation must remain uncommitted until acceptance.
 
-### Phase 2B — Inferential design (future, not started)
+### Phase 2B — Experimental design contract and two-group Welch comparison
 
-- **Goal:** Review and specify whether any inferential analyses are scientifically appropriate for the supported experiment designs.
-- **Allowed modification:** Future design documentation, reviewed assumptions, and tests for approved inferential contracts.
-- **Forbidden modification:** Any implementation of inferential statistics, p-values, tests, ELISA fitting, charts, AI, reports, UI, or silent repeat aggregation before explicit authorization.
-- **Deliverables:** Owner- and scientific-reviewer-approved inferential design decisions only.
-- **Test method:** Future design review and synthetic contract tests after authorization.
-- **PASS standard:** No unsupported inferential rule is implemented or implied; repeat and independence assumptions are explicit.
-- **Entry to next phase:** Scientific reviewer and owner approve the design and authorize implementation.
+- **Goal:** Execute one explicitly confirmed two-sided Welch comparison for one `generic_grouped` endpoint, two user-named independent groups, and explicit experimental units.
+- **Allowed modification:** `contracts`, `statistics`, the offline Phase 2B CLI, experimental-unit preview/aggregation, SciPy Welch calculation, tests, and Phase 2B documentation.
+- **Forbidden modification:** Pairing, repeated measures, clustering, multi-group or multi-factor tests, batch testing, ELISA processing/fitting, automatic biological-sample inference, automatic repeat classification, outlier deletion, imputation, transformation, unit conversion, charts, reports, AI, network, database, or UI.
+- **Deliverables:** Explicit design declaration; plan/input/design/preview hash binding; unit-level preview; `none` and explicitly declared technical-repeat `mean` policies; deterministic Welch result and confidence interval; failure diagnostics; strict JSON and run-manifest provenance.
+- **Test method:** Independent fixed-value expectations for A=`[1,2,3]` and B=`[4,5,6]`; hand-checked SD, t, df, p, and CI; repeat aggregation, identity conflicts, missing declarations, duplicate records, zero variance, changed bindings, Phase 2A/ELISA rejection, CLI exit codes, and regression tests.
+- **PASS standard:** Only a confirmed, hash-bound, structurally ready two-group plan executes; every participating record has an explicit unit; source records remain preserved; warnings remain visible; results contain no `NaN` or `Infinity`; SciPy and implementation versions are recorded.
+- **Entry to next phase:** Owner and scientific reviewer accept this restricted implementation. No ELISA, chart, AI, UI, or broader inferential method begins automatically.
 
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 
