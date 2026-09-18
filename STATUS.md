@@ -1,10 +1,11 @@
 # Project status
 
-- **Current phase:** Phase 2B — Experimental design contract and restricted independent two-group Welch comparison
-- **Completed:** Phase 0 baseline commit `5456757`; Phase 1 commit `4bb5e06`; Phase 2A baseline commit `1b5cd90`; read-only CSV and `.xlsx` readers; explicit mappings and structural QC; traceable import artifacts; measurement-row descriptive statistics; explicit two-group design contract; experimental-unit preview; `none` and explicit technical-repeat `mean` policies; plan/design/input/preview hash binding; deterministic SciPy Welch computation; synthetic unit and CLI tests.
-- **Current test result:** PASS — 49 pytest tests, `ruff check .`, `mypy src`, and `git diff --check` pass; Phase 0, Phase 1, and Phase 2A regression coverage remains passing.
-- **Confirmed decisions:** `generic_grouped` requires `sample_id`, `group`, and `measurement`; Phase 2B additionally requires an explicit `experimental_unit_id` mapping and user design declaration; independence is recorded as user-declared and not software-verified; `independent_biological_n` remains null; `sample_sd` uses `ddof=1`; technical repeats are only averaged under explicit `mean` policy with unique technical IDs; duplicate complete records block Phase 2B inference.
-- **Unresolved questions:** Broader inferential methods, ELISA 4PL/5PL selection, detection-range rules, chart/report presentation, AI privacy policy, and institutional retention policy remain out of scope.
-- **Next step:** Owner and scientific reviewer acceptance of the uncommitted Phase 2B changes. Do not enter ELISA, charts, AI, UI, or broader inferential work automatically.
+- **Current phase:** Phase 3A — ELISA standard-only 4PL fitting and diagnostics
+- **Completed:** Phase 0 baseline `5456757`; Phase 1 `4bb5e06`; Phase 2A `1b5cd90`; Phase 2B baseline `fe549c9`; read-only CSV/XLSX import; structural QC; confirmed generic grouped descriptions; explicit experimental-unit Welch analysis; explicit ELISA 4PL design, standard preview, deterministic multi-start fitting, diagnostics, and offline CLI.
+- **Current test result:** PASS — 62 pytest tests, `ruff check .`, and `mypy src` pass after the Phase 3A implementation. `git diff --check` is run as the final gate.
+- **Confirmed decisions:** Phase 3A accepts only `elisa_standard_curve`; the user explicitly declares one curve context, units, direction, and replicate policy. Only standard rows enter the fit. Sample, blank, and control rows are preserved and excluded. The 4PL uses stable log/`expit` evaluation, float64 SciPy least-squares, deterministic bounded multi-starts, raw-response unweighted linear loss, and no model/direction fallback. Six positive concentration levels are an engineering precondition, not scientific validation.
+- **4PL status semantics:** A computed numerical candidate is not a validated assay curve. Every successful result contains `curve_validated=false` and `quantification_enabled=false`; no unknown-sample concentration is produced.
+- **Unresolved questions:** Unknown-sample back-calculation, 5PL selection, blank/normalization rules, detection/quantification range validation, chart/report presentation, AI privacy policy, and institutional retention remain out of scope.
+- **Next step:** Owner and scientific reviewer acceptance of the uncommitted Phase 3A changes. Do not enter unknown-sample fitting, 5PL, charts, reports, AI, or UI automatically.
 - **Last updated:** 2026-09-18 (Asia/Shanghai)
-- **Final state:** `READY_FOR_PHASE_2B_REVIEW` (Phase 2B changes remain uncommitted.)
+- **Final state:** `READY_FOR_PHASE_3A_REVIEW` (Phase 3A changes remain uncommitted.)

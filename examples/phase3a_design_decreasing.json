@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "assay_type": "elisa_standard_curve",
+  "curve_context_declared": true,
+  "curve_context_description": "Synthetic single-curve decreasing ELISA standard context.",
+  "concentration_unit": "ng/mL",
+  "response_unit": "AU",
+  "direction": "decreasing",
+  "standard_replicate_policy": "none",
+  "standard_repeat_id_field": null,
+  "blank_policy": "none",
+  "weighting": "none",
+  "loss": "linear",
+  "optimizer": "scipy.optimize.least_squares",
+  "ftol": 1e-12,
+  "xtol": 1e-12,
+  "gtol": 1e-12,
+  "max_nfev": 2000,
+  "max_starts": 12,
+  "boundary_proximity_threshold": 1e-6,
+  "jacobian_condition_threshold": 1e10
+}

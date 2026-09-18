@@ -16,7 +16,7 @@ from .enums import IssueSeverity, RunStatus
 
 SCHEMA_VERSION = "1.0"
 AssayType = Literal["generic_grouped", "elisa_standard_curve"]
-AnalysisLevel = Literal["measurement_rows", "experimental_units"]
+AnalysisLevel = Literal["measurement_rows", "experimental_units", "standard_curve_levels"]
 DescriptiveStatisticName = Literal["n_measurements", "mean", "median", "min", "max", "sample_sd"]
 IndependentTwoGroupDesignType = Literal["independent_two_group"]
 TechnicalRepeatPolicy = Literal["none", "mean"]
@@ -191,6 +191,25 @@ class AnalysisPlan(ContractBaseModel):
     design_declaration_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     experimental_unit_preview_path: str | None = None
     preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    curve_direction: Literal["increasing", "decreasing"] | None = None
+    curve_context_declared: bool | None = None
+    curve_context_description: str | None = None
+    standard_replicate_policy: Literal["none", "mean_by_concentration"] | None = None
+    standard_repeat_id_field: Literal["replicate_id", "technical_replicate_id"] | None = None
+    blank_policy: Literal["none"] | None = None
+    weighting: Literal["none"] | None = None
+    loss: Literal["linear"] | None = None
+    optimizer: Literal["scipy.optimize.least_squares"] | None = None
+    optimizer_settings: dict[str, float | int] = Field(default_factory=dict)
+    parameter_bounds: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    initial_starts: list[dict[str, float]] = Field(default_factory=list)
+    diagnostic_thresholds: dict[str, float] = Field(default_factory=dict)
+    standards_preview_path: str | None = None
+    standards_preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    curve_design_path: str | None = None
+    curve_design_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    included_standard_record_numbers: list[int] = Field(default_factory=list)
+    excluded_record_reasons: dict[str, str] = Field(default_factory=dict)
 
 
 class StatisticRecord(ContractBaseModel):
@@ -458,8 +477,11 @@ class RunManifest(ContractBaseModel):
     source_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     analysis_plan_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
-    method: Literal["welch_t"] | None = None
+    method: Literal["welch_t", "four_parameter_logistic"] | None = None
     independence_status: Literal["user_declared_not_verified"] | None = None
+    curve_validated: Literal[False] | None = None
+    quantification_enabled: Literal[False] | None = None
+    standards_preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
 
 
 __all__ = [

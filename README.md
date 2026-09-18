@@ -4,16 +4,18 @@ BioLab Copilot is a local-first foundation for traceable biological experiment d
 
 ## Current status
 
-Phase 0 is committed as the local baseline, Phase 1 is committed as `4bb5e06`, and Phase 2A is
-committed as `1b5cd90`. Phase 1 provides read-only CSV/XLSX ingestion, explicit mappings, type
-parsing, structural QC, and traceable JSON outputs. Phase 2A adds confirmed measurement-row
-descriptive statistics for `generic_grouped`. Phase 2B is the current uncommitted work and adds
-only a confirmed, two-group, experimental-unit-level Welch comparison.
+Phase 0 is committed as the local baseline, Phase 1 is committed as `4bb5e06`, Phase 2A is
+committed as `1b5cd90`, and the Phase 2B baseline is committed as `fe549c9`. Phase 1 provides
+read-only CSV/XLSX ingestion, explicit mappings, type parsing, structural QC, and traceable JSON
+outputs. Phase 2A adds confirmed measurement-row descriptive statistics for `generic_grouped`.
+Phase 2B adds a confirmed, two-group, experimental-unit-level Welch comparison. Phase 3A is the
+current uncommitted work and adds only a confirmed, standard-only ELISA 4PL fit.
 
-Phase 2A and 2B intentionally contain no ELISA processing or fitting, automatic outlier handling,
-imputation, transformation, unit conversion, chart, AI integration, report renderer, database,
-network function, or formal UI. Phase 2B does not prove independence and does not infer biological
-sample size.
+Phase 2A and 2B intentionally contain no ELISA processing or fitting. Phase 3A intentionally
+contains no unknown-sample back-calculation. Automatic outlier handling, imputation,
+transformation, unit conversion, chart, AI integration, report renderer, database, network
+function, or formal UI remain out of scope. Phase 2B does not prove independence and does not
+infer biological sample size.
 
 ## Windows quick start
 
@@ -95,5 +97,33 @@ manifest in a new run directory. `analysis_level=experimental_units`,
 `independent_biological_n=null`, and `independence_status=user_declared_not_verified` are
 intentional. The minimum of two experimental units per group is a computation precondition, not
 evidence that a study has adequate sample size or valid assumptions.
+
+## Phase 3A CLI
+
+Phase 3A accepts only an `elisa_standard_curve` import artifact and a separate explicit design
+declaration. The declaration fixes the curve direction, concentration/response units, replicate
+policy, optimizer settings, numerical bounds, and diagnostic thresholds. It never guesses a
+direction or model:
+
+```powershell
+python -m biolab_copilot.cli generate-4pl-plan runs\<phase1-run>\imported_data.json `
+  --design-file examples\phase3a_design_increasing.json `
+  --output-dir outputs\phase3a-plans
+```
+
+Review `standards_preview.json` and `analysis_plan.json`, then set `confirmed=true`, explicitly
+confirm each listed warning, and calculate the resulting plan SHA-256:
+
+```powershell
+python -m biolab_copilot.cli execute-4pl outputs\phase3a-plans\<plan-run>\analysis_plan.json `
+  --confirm-plan-sha256 <sha256-of-confirmed-plan> `
+  --output-dir outputs\phase3a
+```
+
+The run emits `analysis_plan.json`, `standards_preview.json`, `curve_fit_result.json`,
+`analysis_issues.json`, and `run_manifest.json`. The fit uses the declared 4PL direction and
+standard concentration levels only. Sample, blank, and control rows remain in the preview but
+are excluded; `curve_validated=false` and `quantification_enabled=false`, so no unknown-sample
+concentration is calculated. See [docs/ELISA_4PL_DEFINITIONS.md](docs/ELISA_4PL_DEFINITIONS.md).
 
 See [PLAN.md](PLAN.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and [docs/PRODUCT_SPEC.md](docs/PRODUCT_SPEC.md) for the controlled roadmap. This project is not production-ready and has not completed scientific validation.

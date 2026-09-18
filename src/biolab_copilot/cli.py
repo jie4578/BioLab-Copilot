@@ -22,6 +22,7 @@ from biolab_copilot.contracts import (
     AnalysisPlan,
     AnalysisResult,
     ArtifactFile,
+    CurveFitResult,
     DatasetProfile,
     ExperimentalUnitsPreview,
     ImportResult,
@@ -29,6 +30,7 @@ from biolab_copilot.contracts import (
     IssueSeverity,
     RunManifest,
     RunStatus,
+    StandardsPreview,
     ValidationIssue,
 )
 from biolab_copilot.ingestion import (
@@ -40,10 +42,13 @@ from biolab_copilot.ingestion import (
 )
 from biolab_copilot.profiling import profile_and_validate
 from biolab_copilot.statistics import (
+    build_4pl_plan,
     build_analysis_plan,
     build_welch_plan,
+    compute_4pl_fit,
     compute_grouped_descriptive,
     compute_welch_result,
+    validate_4pl_execution_inputs,
     validate_execution_inputs,
     validate_welch_execution_inputs,
 )
@@ -327,6 +332,24 @@ def _build_parser() -> argparse.ArgumentParser:
     welch_execute_parser.add_argument("plan_file")
     welch_execute_parser.add_argument("--confirm-plan-sha256", required=True)
     welch_execute_parser.add_argument("--output-dir", default="outputs/phase2b")
+
+    curve_plan_parser = subparsers.add_parser(
+        "generate-4pl-plan",
+        aliases=["4pl-plan"],
+        help="Generate an unconfirmed ELISA standard-only 4PL plan and preview",
+    )
+    curve_plan_parser.add_argument("input_artifact")
+    curve_plan_parser.add_argument("--design-file", required=True)
+    curve_plan_parser.add_argument("--output-dir", default="outputs/phase3a-plans")
+
+    curve_execute_parser = subparsers.add_parser(
+        "execute-4pl",
+        aliases=["execute-curve-fit"],
+        help="Execute a confirmed ELISA standard-only 4PL plan",
+    )
+    curve_execute_parser.add_argument("plan_file")
+    curve_execute_parser.add_argument("--confirm-plan-sha256", required=True)
+    curve_execute_parser.add_argument("--output-dir", default="outputs/phase3a")
     return parser
 
 
@@ -906,6 +929,206 @@ def _run_execute_welch(args: argparse.Namespace) -> int:
         return EXIT_QC_ERRORS
 
 
+def _write_phase3a_outputs(
+    *,
+    plan_bytes: bytes,
+    plan: AnalysisPlan,
+    preview: StandardsPreview | None,
+    result: CurveFitResult,
+    issues: list[ValidationIssue],
+    plan_sha256: str,
+    run_id: str,
+    run_dir: Path,
+    started_at: datetime,
+    finished_at: datetime,
+    configuration: dict[str, Any],
+    import_result: ImportResult | None,
+) -> None:
+    plan_path = run_dir / "analysis_plan.json"
+    plan_path.write_bytes(plan_bytes)
+    preview_path = run_dir / "standards_preview.json"
+    if preview is not None:
+        _write_json(preview_path, preview.model_dump(mode="json"))
+    else:
+        _write_json(
+            preview_path,
+            {
+                "schema_version": "1.0",
+                "preview_ready": False,
+                "blocking_reasons": _issue_payload(issues),
+            },
+        )
+    result_path = run_dir / "curve_fit_result.json"
+    issues_path = run_dir / "analysis_issues.json"
+    _write_json(result_path, result.model_dump(mode="json"))
+    _write_json(issues_path, _issue_payload(issues))
+    artifacts = [
+        _output_file(plan_path, "analysis_plan"),
+        _output_file(preview_path, "standards_preview"),
+        _output_file(result_path, "curve_fit_result"),
+        _output_file(issues_path, "analysis_issues"),
+    ]
+    manifest = RunManifest(
+        run_id=run_id,
+        experiment_id=plan.experiment_id,
+        status=RunStatus.COMPLETED if result.status == "computed" else RunStatus.FAILED,
+        input_files=[import_result.input_file] if import_result is not None else [],
+        configuration=configuration,
+        software_versions={
+            "biolab_copilot": __version__,
+            "python": platform.python_version(),
+            "pydantic": pydantic.__version__,
+            "scipy": scipy.__version__,
+            "statistics_implementation": "phase3a-4pl-standard-only-v1",
+        },
+        warnings=[issue for issue in issues if issue.severity == IssueSeverity.WARNING],
+        created_at=started_at,
+        started_at=started_at,
+        finished_at=finished_at,
+        assay_type=plan.assay_type,
+        column_mapping=plan.column_mapping,
+        parse_configuration=plan.configuration,
+        output_files=artifacts,
+        analysis_ready=result.status == "computed",
+        analysis_level="standard_curve_levels",
+        input_artifact_sha256=plan.input_artifact_sha256,
+        source_sha256=(
+            import_result.input_file.sha256 if import_result is not None else plan.source_sha256
+        ),
+        analysis_plan_sha256=plan_sha256,
+        preview_sha256=plan.standards_preview_sha256,
+        method="four_parameter_logistic",
+        curve_validated=False,
+        quantification_enabled=False,
+        standards_preview_sha256=plan.standards_preview_sha256,
+    )
+    _write_json(run_dir / "run_manifest.json", manifest.model_dump(mode="json"))
+
+
+def _run_generate_4pl_plan(args: argparse.Namespace) -> int:
+    """Generate an explicit, unconfirmed Phase 3A standard-only plan."""
+
+    try:
+        input_path = _path_inside_project(args.input_artifact)
+        design_path = _path_inside_project(args.design_file)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root in {input_path.parent, design_path.parent}:
+            raise ValueError(
+                "Phase 3A plan output must be separate from the input artifact and design file."
+            )
+        run_id, run_dir = _run_directory(output_root)
+        preview_path = run_dir / "standards_preview.json"
+        build = build_4pl_plan(input_path, design_path, preview_path)
+        _write_json(preview_path, build.preview.model_dump(mode="json"))
+        preview_sha256 = sha256_file(preview_path)
+        plan = build.plan.model_copy(update={"standards_preview_sha256": preview_sha256})
+        plan_path = run_dir / "analysis_plan.json"
+        _write_json(plan_path, plan.model_dump(mode="json"))
+        plan_sha256 = sha256_file(plan_path)
+        _print_issues(list(build.issues))
+        print(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "plan_id": plan.plan_id,
+                    "plan_path": str(plan_path.resolve()),
+                    "plan_sha256": plan_sha256,
+                    "preview_path": str(preview_path.resolve()),
+                    "preview_sha256": preview_sha256,
+                    "preview_ready": build.preview.preview_ready,
+                    "confirmed": plan.confirmed,
+                    "required_confirmations": plan.required_confirmations,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return (
+            EXIT_OK
+            if not any(
+                issue.severity in {IssueSeverity.ERROR, IssueSeverity.BLOCKING}
+                for issue in build.issues
+            )
+            else EXIT_QC_ERRORS
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "FOUR_PL_PLAN_GENERATION_FAILED",
+            str(exc),
+            (
+                "Use a project-local ELISA import artifact, explicit 4PL design file, "
+                "and separate output directory."
+            ),
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
+def _run_execute_4pl(args: argparse.Namespace) -> int:
+    """Execute only a confirmed, fully revalidated Phase 3A plan."""
+
+    started_at = datetime.now(UTC)
+    try:
+        plan_path = _path_inside_project(args.plan_file)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root == plan_path.parent:
+            raise ValueError("Phase 3A output must be separate from the plan directory.")
+        run_id, run_dir = _run_directory(output_root)
+        plan_bytes = plan_path.read_bytes()
+        preflight = validate_4pl_execution_inputs(
+            plan_path,
+            args.confirm_plan_sha256,
+            allowed_root=_project_root(),
+        )
+        result = compute_4pl_fit(preflight)
+        import_result = preflight.import_result
+        issues = result.issues
+        finished_at = datetime.now(UTC)
+        _write_phase3a_outputs(
+            plan_bytes=plan_bytes,
+            plan=preflight.plan,
+            preview=preflight.preview,
+            result=result,
+            issues=issues,
+            plan_sha256=preflight.plan_sha256,
+            run_id=run_id,
+            run_dir=run_dir,
+            started_at=started_at,
+            finished_at=finished_at,
+            configuration={
+                "command": "execute-4pl",
+                "plan_path": str(plan_path),
+                "confirmed_plan_sha256": args.confirm_plan_sha256,
+            },
+            import_result=import_result,
+        )
+        _print_issues(issues)
+        print(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "run_dir": str(run_dir.resolve()),
+                    "status": result.status,
+                    "analysis_ready": result.status == "computed",
+                    "plan_sha256": preflight.plan_sha256,
+                },
+                indent=2,
+            )
+        )
+        return EXIT_OK if result.status == "computed" else EXIT_QC_ERRORS
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "FOUR_PL_EXECUTION_FAILED",
+            str(exc),
+            (
+                "Verify the plan path, explicit plan hash, and separate project-local "
+                "output directory."
+            ),
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "list-sheets":
@@ -922,6 +1145,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_generate_welch_plan(args)
     if args.command in {"execute-welch", "execute-inferential"}:
         return _run_execute_welch(args)
+    if args.command in {"generate-4pl-plan", "4pl-plan"}:
+        return _run_generate_4pl_plan(args)
+    if args.command in {"execute-4pl", "execute-curve-fit"}:
+        return _run_execute_4pl(args)
     return EXIT_FATAL
 
 

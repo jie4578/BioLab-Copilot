@@ -19,7 +19,8 @@ Local filesystem and user-controlled configuration
 Phase 1 implements the contracts, read-only ingestion, and structural profiling/QC boundaries.
 Phase 2A implements a deterministic `generic_grouped` descriptive-statistics boundary at
 `measurement_rows` level. Phase 2B adds only a separate explicit-design boundary for one
-two-group `generic_grouped` Welch comparison at `experimental_units` level. ELISA fitting,
+two-group `generic_grouped` Welch comparison at `experimental_units` level. Phase 3A adds a
+separate standard-only ELISA 4PL boundary at `standard_curve_levels`; unknown-sample inversion,
 visualization, reporting, AI, batch orchestration, and UI remain out of scope.
 
 ## Module responsibilities
@@ -28,7 +29,7 @@ visualization, reporting, AI, batch orchestration, and UI remain out of scope.
 - `ingestion`: read-only Phase 1 CSV/XLSX intake, source preservation, encoding/format errors, sheet selection, resource limits, and hashes.
 - `profiling`: Phase 1 structural shape/type/missingness profiling, explicit mapping validation, and reviewable alerts. It does not calculate CVs or statistics.
 - `assays`: future plugin definitions and assay-specific validation/planning rules.
-- `statistics`: Phase 2A row-level plan binding/descriptive calculations and Phase 2B explicit-design experimental-unit preview/Welch calculation. It does not infer biological sample size, verify independence, select tests automatically, or depend on UI/AI.
+- `statistics`: Phase 2A row-level plan binding/descriptive calculations, Phase 2B explicit-design experimental-unit preview/Welch calculation, and Phase 3A standard-only 4PL preview/fitting. It does not infer biological sample size, verify independence, select models automatically, invert unknown samples, or depend on UI/AI.
 - `visualization`: future rendering from structured results; it must not recompute scientific values.
 - `reporting`: future JSON/XLSX/DOCX rendering from manifest and derived artifacts.
 - `audit`: future run-manifest persistence and provenance checks.
@@ -39,15 +40,15 @@ visualization, reporting, AI, batch orchestration, and UI remain out of scope.
 ## Data flow
 
 Source bytes -> immutable `InputFile` identity -> `DatasetProfile` and `ValidationIssue` list ->
-Phase 1 `ImportResult` -> unconfirmed `AnalysisPlan` -> explicit design/unit preview -> plan-hash
-and warning confirmation -> Phase 2A row-level or Phase 2B unit-level `AnalysisResult` -> future
-`ChartArtifact` / `ReportArtifact` -> `RunManifest`.
+Phase 1 `ImportResult` -> unconfirmed `AnalysisPlan` -> explicit design/unit or standard preview
+-> plan-hash and warning confirmation -> Phase 2A row-level, Phase 2B unit-level, or Phase 3A
+standard-level structured result -> future `ChartArtifact` / `ReportArtifact` -> `RunManifest`.
 
 The original file is never replaced by a derived table. Any future derived representation must carry its source hash and transformation metadata. Warnings and unresolved issues travel with the run.
 
 ## Dependency direction
 
-Dependencies point inward toward contracts. Ingestion, profiling, assays, statistics, visualization, reporting, AI, batch, and UI may depend on contracts, but contracts must not depend on any of them. Phase 2A and 2B statistics may consume the read-only Phase 1 import contract and ingestion hash helper, with SciPy isolated at the Welch calculation boundary; they must not depend on UI, AI, database, or network code. AI may depend on a read-only result DTO and an explicit provider adapter, never on a data frame execution environment. Reporting may consume artifacts but must not calculate statistics.
+Dependencies point inward toward contracts. Ingestion, profiling, assays, statistics, visualization, reporting, AI, batch, and UI may depend on contracts, but contracts must not depend on any of them. Phase 2A, 2B, and 3A statistics consume the read-only Phase 1 import contract and ingestion hash helper; SciPy is isolated at the Welch and 4PL calculation boundaries. They must not depend on UI, AI, database, or network code. AI may depend on a read-only result DTO and an explicit provider adapter, never on a data-frame execution environment. Reporting may consume artifacts but must not calculate statistics.
 
 ## Future plugin interface
 

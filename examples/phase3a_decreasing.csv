@@ -1,0 +1,12 @@
+sample_id,sample_type,standard_concentration,measurement,concentration_unit,measurement_unit,replicate_id
+STD-0,standard,0,2.1,ng/mL,AU,S0
+STD-1,standard,0.1,2.08019801980198,ng/mL,AU,S1
+STD-2,standard,0.3,2.041747572815534,ng/mL,AU,S2
+STD-3,standard,1,1.918181818181818,ng/mL,AU,S3
+STD-4,standard,3,1.6384615384615384,ng/mL,AU,S4
+STD-5,standard,10,1.1,ng/mL,AU,S5
+STD-6,standard,30,0.6,ng/mL,AU,S6
+STD-7,standard,100,0.2818181818181818,ng/mL,AU,S7
+STD-8,standard,300,0.164516129032258,ng/mL,AU,S8
+SAMPLE-1,sample,,0.75,ng/mL,AU,
+BLANK-1,blank,,0.05,ng/mL,AU,

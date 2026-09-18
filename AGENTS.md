@@ -70,3 +70,10 @@ python scripts\generate_xlsx_templates.py
 - `none` requires one measurement row per experimental unit. `mean` requires explicit technical-repeat declarations and unique `technical_replicate_id` values within each unit. All source rows and locations remain available in the preview.
 - Error/blocking QC, duplicate complete records, missing or cross-group unit IDs, unsupported designs, changed input/design/preview hashes, and unconfirmed plans block inference. Warnings remain visible and require explicit confirmation where listed by the plan.
 - Phase 2B must not add paired, repeated-measures, clustered, multi-group, multi-factor, batch, ELISA, chart, AI, report, database, network, or UI behavior. Do not enter any later phase after a failed quality check.
+
+## Phase 3A implementation boundary
+
+- Phase 3A may implement only a confirmed `elisa_standard_curve` standard-only 4PL fit with an explicit direction and explicit replicate policy.
+- Phase 3A must not back-calculate unknown samples, implement 5PL, apply blank correction, weighting, robust loss, point deletion, unit conversion, LOD/LLOQ/ULOQ rules, charts, reports, AI/API calls, databases, network behavior, or formal UI.
+- Standard rows must remain traceable at both source-record and concentration-level views. Sample, blank, and control rows are retained but excluded from the fit.
+- Numerical convergence is not assay validation. Every successful result must state `curve_validated=false` and `quantification_enabled=false`.

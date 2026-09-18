@@ -2,9 +2,9 @@
 
 Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
 
-Current delivery: Phase 1 is committed as `4bb5e06`; Phase 2A is committed as `1b5cd90`; and
-Phase 2B implementation is complete in the working tree and remains uncommitted pending owner
-acceptance. Later phases have not started.
+Current delivery: Phase 1 is committed as `4bb5e06`; Phase 2A is committed as `1b5cd90`; Phase
+2B is baselined locally as `fe549c9`; and Phase 3A implementation is complete in the working tree
+and remains uncommitted pending owner acceptance. Later phases have not started.
 
 ## Phase 0 — Foundation and contracts
 
@@ -56,6 +56,16 @@ acceptance. Later phases have not started.
 - **Test method:** Independent fixed-value expectations for A=`[1,2,3]` and B=`[4,5,6]`; hand-checked SD, t, df, p, and CI; repeat aggregation, identity conflicts, missing declarations, duplicate records, zero variance, changed bindings, Phase 2A/ELISA rejection, CLI exit codes, and regression tests.
 - **PASS standard:** Only a confirmed, hash-bound, structurally ready two-group plan executes; every participating record has an explicit unit; source records remain preserved; warnings remain visible; results contain no `NaN` or `Infinity`; SciPy and implementation versions are recorded.
 - **Entry to next phase:** Owner and scientific reviewer accept this restricted implementation. No ELISA, chart, AI, UI, or broader inferential method begins automatically.
+
+### Phase 3A — ELISA standard-only 4PL fitting and diagnostics
+
+- **Goal:** Execute one explicitly confirmed, deterministic 4PL fit for one `elisa_standard_curve` standard context, with a user-declared increasing or decreasing direction.
+- **Allowed modification:** ELISA standard preview and aggregation, 4PL contracts, deterministic SciPy least-squares fitting, numerical diagnostics, offline CLI, synthetic fixtures, and Phase 3A documentation.
+- **Forbidden modification:** Unknown-sample concentration back-calculation, 5PL, automatic direction/model selection, blank correction, normalization, weighting, robust loss, standard-point deletion, unit conversion, LOD/LLOQ/ULOQ/range claims, charts, reports, AI, network, database, or UI.
+- **Deliverables:** Explicit 4PL design and plan; standard-record inclusion/exclusion preview; `none` and explicit `mean_by_concentration` policies; deterministic multi-start fitting; residual/SSE/RMSE/descriptive-R² and Jacobian diagnostics; strict JSON and run-manifest provenance.
+- **Test method:** Independent rational-form synthetic increasing/decreasing curves; zero-concentration limits; parameter recovery; fixed-noise diagnostics; row-order determinism; repeat-level equal weighting; constant/nonfinite/negative/insufficient-level rejection; confirmation and hash binding; unknown-row exclusion; CLI and regression tests.
+- **PASS standard:** Only a confirmed, hash-bound, structurally ready ELISA standard-only plan executes; at least six positive levels are present; all configured starts are recorded; no result contains `NaN` or `Infinity`; successful results state `curve_validated=false` and `quantification_enabled=false`.
+- **Entry to next phase:** Owner and scientific reviewer accept the 4PL implementation and diagnostics. This phase does not authorize unknown-sample back-calculation, 5PL, charts, AI, reports, or UI.
 
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 

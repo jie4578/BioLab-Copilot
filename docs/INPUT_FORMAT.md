@@ -98,3 +98,31 @@ With `technical_repeat_policy=none`, each unit must have exactly one measurement
 `replicate_type=technical` for that unit. Values are averaged arithmetically within a unit and
 each unit receives equal weight. All source rows and locations remain in the preview. Unknown
 repeat types are not converted to technical repeats.
+
+## Phase 3A standard-curve fit declaration
+
+Phase 3A requires a separate JSON `ELISA4PLDesign` declaration. The user must explicitly provide:
+
+| Field | Allowed values or rule |
+| --- | --- |
+| `curve_context_declared` | `true`; one file represents one declared curve context |
+| `concentration_unit` | Non-empty declared concentration unit; no conversion |
+| `response_unit` | Non-empty declared response unit; no conversion |
+| `direction` | `increasing` or `decreasing`; no automatic selection |
+| `standard_replicate_policy` | `none` or `mean_by_concentration` |
+| `standard_repeat_id_field` | Required and explicit for mean-by-concentration; `replicate_id` or `technical_replicate_id` |
+| `blank_policy`, `weighting`, `loss` | Exactly `none`, `none`, and `linear` |
+| optimizer settings | Explicit SciPy least-squares tolerances, evaluation budget, starts, bounds, and diagnostic thresholds |
+
+Only `sample_type=standard` records with finite nonnegative `standard_concentration` and finite
+`measurement` can enter the preview. At least six distinct positive concentration levels are an
+engineering precondition for this implementation; an optional zero level is retained using the
+analytic 4PL limit. `sample`, `blank`, and `control` records are preserved with an exclusion
+reason and do not receive a calculated concentration.
+
+With `none`, each concentration level must have exactly one standard record. With
+`mean_by_concentration`, same-concentration records require unique explicit repeat IDs and are
+averaged arithmetically within the level; concentration levels, not wells, are equally weighted.
+Duplicate complete standard records block fitting. Unequal repeat counts warn but do not change
+level weighting. A changed source artifact, mapping, design declaration, preview, direction,
+numerical setting, or plan invalidates the previous plan hash confirmation.

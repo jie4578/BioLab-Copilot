@@ -1,0 +1,9 @@
+{
+  "sample_id": "sample_id",
+  "sample_type": "sample_type",
+  "standard_concentration": "standard_concentration",
+  "measurement": "measurement",
+  "concentration_unit": "concentration_unit",
+  "measurement_unit": "measurement_unit",
+  "replicate_id": "replicate_id"
+}

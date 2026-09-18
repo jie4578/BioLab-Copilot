@@ -79,3 +79,38 @@ Both groups with zero variance, zero/non-finite standard error, overflow, non-fi
 outputs, and p-value underflow are failed runs. One zero-variance group may produce a finite
 result with an explicit warning. No p-value is described as the probability that the null is
 true, and no result is described as causal, efficacious, or statistically conclusive.
+
+## Phase 3A standard-only 4PL
+
+Phase 3A is limited to one `elisa_standard_curve` context and a user-selected direction. For
+`x>0`, the deterministic model is:
+
+`y = L + (U-L) * expit(s * B * (log(x) - log(C)))`
+
+where `L` is `lower_asymptote`, `U` is `upper_asymptote` with `U>L`, `C` is
+`midpoint_concentration` with `C>0`, `B` is `slope_magnitude` with `B>0`, and `s` is `+1` for
+`increasing` or `-1` for `decreasing`. At `x=0`, the analytic limit is `L` for increasing and
+`U` for decreasing. The implementation uses `log` and SciPy `expit`; it does not calculate
+`x**B`, `C/x`, or `log(0)`.
+
+Only standard rows participate. Sample, blank, and control rows remain in the imported data and
+preview but are excluded with reasons. Standard concentration units and response units are user
+declared and checked; no unit conversion, blank subtraction, normalization, or dilution-factor
+correction occurs. Standard concentrations must be finite and nonnegative, responses must be
+finite, and at least six distinct positive concentration levels are required. This is an
+engineering protection condition, not a general scientific sufficiency claim.
+
+With `standard_replicate_policy=none`, a concentration level has exactly one record. With
+`mean_by_concentration`, explicit unique repeat identifiers are required and records at one
+concentration are averaged arithmetically. Fit levels are equally weighted even when raw repeat
+counts differ. The fit result reports both `n_fit_levels` and `n_raw_standard_measurements`,
+source record references, per-level observed/predicted/residual values, and repeat counts.
+
+The fit uses float64, non-weighted raw-response least squares with `loss=linear`, explicit finite
+multi-starts, deterministic numerical bounds, and a fixed evaluation budget. `RMSE` is
+`sqrt(SSE / n_fit_levels)`, not a residual standard error. `R²` is descriptive and calculated
+only over fitted concentration levels; it may be negative and is `null` when its denominator is
+zero. Jacobian rank, condition number, boundary proximity, midpoint span, and monotonicity are
+diagnostics, not assay validation criteria. A successful numerical result always states
+`curve_validated=false` and `quantification_enabled=false`; it does not calculate unknown sample
+concentrations or establish LLOQ/ULOQ, detection range, efficacy, causality, or a validated EC50.

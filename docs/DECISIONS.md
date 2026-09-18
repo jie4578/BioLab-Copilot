@@ -84,3 +84,18 @@
 - **Context:** Technical-repeat aggregation and group assignment are scientific decisions that must be visible before a test runs. A plan confirmation is not meaningful if the preview or input can change afterward.
 - **Decision:** Generate `experimental_units.json` before execution and bind its SHA-256, the Phase 1 import-artifact hash, design-file hash, mapping, and repeat policy into the plan. Recompute and compare the preview at execution. Use SciPy's supported Welch implementation with explicit two-sided settings and record its version.
 - **Consequences:** Users review the exact experimental-unit assignments and aggregation before confirming. Every unit is equally weighted after an explicit within-unit mean. Preview, input, design, or plan changes invalidate the confirmation; no fallback inferential method is selected automatically.
+
+## ADR-013: Restrict Phase 3A to an explicit-direction, standard-only 4PL
+
+- **Status:** Accepted for Phase 3A
+- **Context:** ELISA workflows can silently change scientific meaning through blank correction, weighting, automatic direction/model selection, standard-point deletion, or unknown-sample extrapolation. Those decisions require separate validation and are not authorized in this phase.
+- **Decision:** Require a user-declared single curve context, concentration/response units, `increasing` or `decreasing` direction, and either one record per concentration or explicit mean-by-concentration technical repeats. Fit only standard rows with a stable 4PL definition and deterministic unweighted raw-response least squares. Preserve sample, blank, and control rows but exclude them with reasons.
+- **Compatibility:** The additions are optional fields on the existing `AnalysisPlan` and new additive Phase 3A contracts with `schema_version=1.0`; older Phase 1, Phase 2A, and Phase 2B JSON remains deserializable. Phase 3A execution requires the new fields and rejects older plans by analysis level and assay type.
+- **Consequences:** The implementation provides a reviewable numerical calibration diagnostic without claiming curve validation, EC50 validation, quantification range, or unknown-sample concentration.
+
+## ADR-014: Bind 4PL execution to a deterministic standard preview and numerical configuration
+
+- **Status:** Accepted for Phase 3A
+- **Context:** Standard inclusion, replicate aggregation, numerical bounds, starts, tolerances, and diagnostics affect the fitted result and must be reviewable before execution.
+- **Decision:** Generate `standards_preview.json` and an explicit `analysis_plan.json` containing the source/import hashes, mapping and parser configuration, standard inclusion/exclusion, units, direction, optimizer settings, bounds, starts, and diagnostic thresholds. Execution requires explicit confirmation of the resulting plan SHA-256 and recomputes/compares the preview and source bindings.
+- **Consequences:** Changed input, design, preview, direction, algorithm settings, or plan invalidates the previous confirmation. Every optimizer start is retained, failures are diagnostic, and numerical warnings do not become scientific validation.
