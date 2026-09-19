@@ -3,8 +3,9 @@
 Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
 
 Current delivery: Phase 1 is committed as `4bb5e06`; Phase 2A is committed as `1b5cd90`; Phase
-2B is baselined locally as `fe549c9`; and Phase 3A implementation is complete in the working tree
-and remains uncommitted pending owner acceptance. Later phases have not started.
+2B is baselined locally as `fe549c9`; Phase 3A is baselined locally as `9280e0a`; and Phase 3B
+implementation is complete in the working tree and remains uncommitted pending owner acceptance.
+Later phases have not started.
 
 ## Phase 0 — Foundation and contracts
 
@@ -66,6 +67,16 @@ and remains uncommitted pending owner acceptance. Later phases have not started.
 - **Test method:** Independent rational-form synthetic increasing/decreasing curves; zero-concentration limits; parameter recovery; fixed-noise diagnostics; row-order determinism; repeat-level equal weighting; constant/nonfinite/negative/insufficient-level rejection; confirmation and hash binding; unknown-row exclusion; CLI and regression tests.
 - **PASS standard:** Only a confirmed, hash-bound, structurally ready ELISA standard-only plan executes; at least six positive levels are present; all configured starts are recorded; no result contains `NaN` or `Infinity`; successful results state `curve_validated=false` and `quantification_enabled=false`.
 - **Entry to next phase:** Owner and scientific reviewer accept the 4PL implementation and diagnostics. This phase does not authorize unknown-sample back-calculation, 5PL, charts, AI, reports, or UI.
+
+### Phase 3B — Research-only unknown-sample 4PL inverse and dilution correction
+
+- **Goal:** Produce a per-measurement research-use concentration estimate from an unchanged, numerically eligible Phase 3A 4PL curve without claiming validated quantification.
+- **Allowed modification:** Additive inverse contracts, curve/sample/plan/preview hash validation, protected analytic 4PL inversion, explicit dilution correction, research-only CLI artifacts, synthetic tests, and Phase 3B documentation.
+- **Forbidden modification:** Unknown-repeat aggregation, CV/SD, blank correction, 5PL, extrapolation, LOD/LLOQ/ULOQ, validated range claims, charting, reports, AI, network, database, or UI.
+- **Deliverables:** Explicit research-use and dilution design; curve preflight; per-row statuses and null diagnostics; fitted endpoint span checks; sample/curve/plan/manifest provenance; strict JSON and offline CLI.
+- **Test method:** Independent rational-form increasing/decreasing values; known concentration recovery; endpoint and asymptote guards; dilution factors 1 and 10; out-of-span nulls; missing/invalid factor rejection; unchanged source hashes; stale confirmation; standard/blank/control exclusion; regression tests and CLI exit codes.
+- **PASS standard:** Only an explicitly confirmed plan bound to an unchanged, converged, non-severe Phase 3A curve runs. Every result states research-only semantics, no output contains `NaN` or `Infinity`, no row is silently aggregated or extrapolated, and numerical errors return a nonzero diagnostic status.
+- **Entry to next phase:** Owner and scientific reviewer accept the Phase 3B evidence. Stop; do not enter charts, reports, AI, UI, LOD/LLOQ/ULOQ, or any validation claim.
 
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 

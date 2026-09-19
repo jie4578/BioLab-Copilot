@@ -14,6 +14,17 @@ from .elisa import (
     StandardsPreview,
 )
 from .enums import IssueSeverity, ReplicateType, RunStatus
+from .inverse import (
+    DilutionFactorSource,
+    ELISAInverseDesign,
+    ExcludedSampleRecord,
+    InverseRunStatus,
+    InverseStatus,
+    SampleConcentrationPreview,
+    SampleConcentrationRecord,
+    SampleConcentrationsResult,
+    SampleSourceMode,
+)
 from .models import (
     SCHEMA_VERSION,
     AnalysisLevel,
@@ -86,4 +97,13 @@ __all__ = [
     "StandardRecordPreview",
     "StandardReplicatePolicy",
     "StandardsPreview",
+    "DilutionFactorSource",
+    "ELISAInverseDesign",
+    "ExcludedSampleRecord",
+    "InverseRunStatus",
+    "InverseStatus",
+    "SampleConcentrationPreview",
+    "SampleConcentrationRecord",
+    "SampleConcentrationsResult",
+    "SampleSourceMode",
 ]

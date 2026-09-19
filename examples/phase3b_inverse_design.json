@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0",
+  "assay_type": "elisa_standard_curve",
+  "intended_use": "research_only",
+  "research_only_acknowledged": true,
+  "validated_quantification_enabled": false,
+  "research_estimation_enabled": true,
+  "curve_context_compatibility_declared": true,
+  "curve_context_compatibility_rationale": "The user has explicitly declared that the sample rows share the Phase 3A curve context and response scale for research use.",
+  "sample_source_mode": "same_import_artifact",
+  "sample_artifact_path": null,
+  "dilution_factor_source": "uniform_declared",
+  "dilution_factor_field": null,
+  "uniform_dilution_factor": 1.0,
+  "allow_extrapolation": false,
+  "response_tolerance": 1e-10,
+  "asymptote_tolerance": 1e-10,
+  "concentration_tolerance": 1e-10,
+  "forward_check_tolerance": 1e-8,
+  "log_overflow_threshold": 700.0,
+  "warning_confirmations": {}
+}

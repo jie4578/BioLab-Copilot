@@ -210,6 +210,38 @@ class AnalysisPlan(ContractBaseModel):
     curve_design_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     included_standard_record_numbers: list[int] = Field(default_factory=list)
     excluded_record_reasons: dict[str, str] = Field(default_factory=dict)
+    # Phase 3B additive fields.  They remain optional so Phase 0-3A plans retain
+    # their original schema and validation behavior.
+    inverse_curve_fit_result_path: str | None = None
+    inverse_curve_fit_result_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    inverse_curve_plan_path: str | None = None
+    inverse_curve_plan_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    inverse_curve_preview_path: str | None = None
+    inverse_curve_preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    inverse_curve_manifest_path: str | None = None
+    inverse_curve_manifest_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    inverse_design_path: str | None = None
+    inverse_design_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    inverse_method: Literal["four_parameter_logistic_inverse"] | None = None
+    inverse_sample_artifact_path: str | None = None
+    inverse_sample_artifact_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    inverse_sample_source_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    inverse_sample_column_mapping: dict[str, str] = Field(default_factory=dict)
+    inverse_sample_parse_configuration: dict[str, Any] = Field(default_factory=dict)
+    intended_use: Literal["research_only"] | None = None
+    research_only_acknowledged: Literal[True] | None = None
+    validated_quantification_enabled: Literal[False] | None = None
+    research_estimation_enabled: Literal[True] | None = None
+    curve_context_compatibility_declared: Literal[True] | None = None
+    curve_context_compatibility_rationale: str | None = None
+    sample_source_mode: Literal["same_import_artifact", "separate_import_artifact"] | None = None
+    dilution_factor_source: Literal["mapped_field", "uniform_declared"] | None = None
+    dilution_factor_field: Literal["dilution_factor"] | None = None
+    uniform_dilution_factor: float | None = Field(default=None, ge=1)
+    allow_extrapolation: Literal[False] | None = None
+    inverse_numeric_settings: dict[str, float] = Field(default_factory=dict)
+    inverse_preview_path: str | None = None
+    inverse_preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
 
 
 class StatisticRecord(ContractBaseModel):
@@ -477,11 +509,20 @@ class RunManifest(ContractBaseModel):
     source_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     analysis_plan_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
     preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
-    method: Literal["welch_t", "four_parameter_logistic"] | None = None
+    method: (
+        Literal["welch_t", "four_parameter_logistic", "four_parameter_logistic_inverse"] | None
+    ) = None
     independence_status: Literal["user_declared_not_verified"] | None = None
     curve_validated: Literal[False] | None = None
     quantification_enabled: Literal[False] | None = None
     standards_preview_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    intended_use: Literal["research_only"] | None = None
+    research_only_acknowledged: Literal[True] | None = None
+    validated_quantification_enabled: Literal[False] | None = None
+    research_estimation_enabled: Literal[True] | None = None
+    curve_fit_result_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    sample_artifact_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
+    sample_result_sha256: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{64}$")
 
 
 __all__ = [

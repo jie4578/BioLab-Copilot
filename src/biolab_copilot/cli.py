@@ -30,6 +30,7 @@ from biolab_copilot.contracts import (
     IssueSeverity,
     RunManifest,
     RunStatus,
+    SampleConcentrationsResult,
     StandardsPreview,
     ValidationIssue,
 )
@@ -44,12 +45,15 @@ from biolab_copilot.profiling import profile_and_validate
 from biolab_copilot.statistics import (
     build_4pl_plan,
     build_analysis_plan,
+    build_inverse_plan,
     build_welch_plan,
     compute_4pl_fit,
     compute_grouped_descriptive,
+    compute_inverse_result,
     compute_welch_result,
     validate_4pl_execution_inputs,
     validate_execution_inputs,
+    validate_inverse_execution_inputs,
     validate_welch_execution_inputs,
 )
 
@@ -350,6 +354,24 @@ def _build_parser() -> argparse.ArgumentParser:
     curve_execute_parser.add_argument("plan_file")
     curve_execute_parser.add_argument("--confirm-plan-sha256", required=True)
     curve_execute_parser.add_argument("--output-dir", default="outputs/phase3a")
+
+    inverse_plan_parser = subparsers.add_parser(
+        "generate-elisa-inverse-plan",
+        aliases=["elisa-inverse-plan"],
+        help="Generate an unconfirmed research-only ELISA 4PL inverse plan and preview",
+    )
+    inverse_plan_parser.add_argument("curve_result")
+    inverse_plan_parser.add_argument("--design-file", required=True)
+    inverse_plan_parser.add_argument("--output-dir", default="outputs/phase3b-plans")
+
+    inverse_execute_parser = subparsers.add_parser(
+        "execute-elisa-inverse",
+        aliases=["elisa-inverse"],
+        help="Execute a confirmed research-only ELISA 4PL inverse plan",
+    )
+    inverse_execute_parser.add_argument("plan_file")
+    inverse_execute_parser.add_argument("--confirm-plan-sha256", required=True)
+    inverse_execute_parser.add_argument("--output-dir", default="outputs/phase3b")
     return parser
 
 
@@ -1129,6 +1151,211 @@ def _run_execute_4pl(args: argparse.Namespace) -> int:
         return EXIT_QC_ERRORS
 
 
+def _write_phase3b_outputs(
+    *,
+    plan_bytes: bytes,
+    plan: AnalysisPlan,
+    result: SampleConcentrationsResult,
+    issues: list[ValidationIssue],
+    plan_sha256: str,
+    run_id: str,
+    run_dir: Path,
+    started_at: datetime,
+    finished_at: datetime,
+    configuration: dict[str, Any],
+    preflight: Any,
+) -> None:
+    """Write an independent Phase 3B run without modifying curve artifacts."""
+    plan_path = run_dir / "analysis_plan.json"
+    plan_path.write_bytes(plan_bytes)
+    result_path = run_dir / "sample_concentrations.json"
+    issues_path = run_dir / "analysis_issues.json"
+    _write_json(result_path, result.model_dump(mode="json"))
+    _write_json(issues_path, _issue_payload(issues))
+    artifacts = [
+        _output_file(plan_path, "analysis_plan"),
+        _output_file(result_path, "sample_concentrations"),
+        _output_file(issues_path, "analysis_issues"),
+    ]
+    sample_import = preflight.sample_import
+    manifest = RunManifest(
+        run_id=run_id,
+        experiment_id=plan.experiment_id,
+        status=(
+            RunStatus.COMPLETED
+            if result.status == "computed"
+            else RunStatus.PARTIAL
+            if result.status == "partial"
+            else RunStatus.FAILED
+        ),
+        input_files=[sample_import.input_file] if sample_import is not None else [],
+        configuration=configuration,
+        software_versions={
+            "biolab_copilot": __version__,
+            "python": platform.python_version(),
+            "pydantic": pydantic.__version__,
+            "scipy": scipy.__version__,
+            "statistics_implementation": "phase3b-4pl-inverse-v1",
+        },
+        warnings=[issue for issue in issues if issue.severity == IssueSeverity.WARNING],
+        created_at=started_at,
+        started_at=started_at,
+        finished_at=finished_at,
+        assay_type="elisa_standard_curve",
+        column_mapping=plan.column_mapping,
+        parse_configuration=plan.configuration,
+        output_files=artifacts,
+        analysis_ready=result.status == "computed",
+        analysis_level="measurement_rows",
+        input_artifact_sha256=plan.inverse_sample_artifact_sha256,
+        source_sha256=plan.inverse_sample_source_sha256,
+        analysis_plan_sha256=plan_sha256,
+        method="four_parameter_logistic_inverse",
+        curve_validated=False,
+        quantification_enabled=False,
+        intended_use="research_only",
+        research_only_acknowledged=True,
+        validated_quantification_enabled=False,
+        research_estimation_enabled=True,
+        curve_fit_result_sha256=plan.inverse_curve_fit_result_sha256,
+        sample_artifact_sha256=plan.inverse_sample_artifact_sha256,
+        sample_result_sha256=sha256_file(result_path),
+    )
+    _write_json(run_dir / "run_manifest.json", manifest.model_dump(mode="json"))
+
+
+def _run_generate_elisa_inverse_plan(args: argparse.Namespace) -> int:
+    """Generate a research-only inverse plan; generation never confirms it."""
+    try:
+        curve_result_path = _path_inside_project(args.curve_result)
+        design_path = _path_inside_project(args.design_file)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root in {curve_result_path.parent, design_path.parent}:
+            raise ValueError(
+                "Phase 3B plan output must be separate from the curve run and design file."
+            )
+        run_id, run_dir = _run_directory(output_root)
+        preview_path = run_dir / "sample_preview.json"
+        build = build_inverse_plan(
+            curve_result_path,
+            design_path,
+            preview_path,
+            allowed_root=_project_root(),
+        )
+        _write_json(preview_path, build.preview.model_dump(mode="json"))
+        preview_sha256 = sha256_file(preview_path)
+        plan = build.plan.model_copy(update={"inverse_preview_sha256": preview_sha256})
+        plan_path = run_dir / "analysis_plan.json"
+        _write_json(plan_path, plan.model_dump(mode="json"))
+        plan_sha256 = sha256_file(plan_path)
+        _print_issues(list(build.issues))
+        print(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "plan_id": plan.plan_id,
+                    "plan_path": str(plan_path.resolve()),
+                    "plan_sha256": plan_sha256,
+                    "preview_path": str(preview_path.resolve()),
+                    "preview_sha256": preview_sha256,
+                    "preview_ready": build.preview.preview_ready,
+                    "confirmed": plan.confirmed,
+                    "required_confirmations": plan.required_confirmations,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return (
+            EXIT_OK
+            if not any(
+                issue.severity in {IssueSeverity.ERROR, IssueSeverity.BLOCKING}
+                for issue in build.issues
+            )
+            else EXIT_QC_ERRORS
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "ELISA_INVERSE_PLAN_GENERATION_FAILED",
+            str(exc),
+            "Use project-local Phase 3A artifacts, an explicit inverse design, and "
+            "a separate output directory.",
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
+def _run_execute_elisa_inverse(args: argparse.Namespace) -> int:
+    """Execute only a confirmed, fully revalidated research-only inverse plan."""
+    started_at = datetime.now(UTC)
+    try:
+        plan_path = _path_inside_project(args.plan_file)
+        output_root = _path_inside_project(args.output_dir)
+        if output_root == plan_path.parent:
+            raise ValueError("Phase 3B output must be separate from the plan directory.")
+        run_id, run_dir = _run_directory(output_root)
+        plan_bytes = plan_path.read_bytes()
+        preflight = validate_inverse_execution_inputs(
+            plan_path,
+            args.confirm_plan_sha256,
+            allowed_root=_project_root(),
+        )
+        result = compute_inverse_result(preflight)
+        issues = [*preflight.issues, *result.issues]
+        finished_at = datetime.now(UTC)
+        _write_phase3b_outputs(
+            plan_bytes=plan_bytes,
+            plan=preflight.plan,
+            result=result,
+            issues=issues,
+            plan_sha256=preflight.plan_sha256,
+            run_id=run_id,
+            run_dir=run_dir,
+            started_at=started_at,
+            finished_at=finished_at,
+            configuration={
+                "command": "execute-elisa-inverse",
+                "plan_path": str(plan_path),
+                "confirmed_plan_sha256": args.confirm_plan_sha256,
+                "curve_fit_result_path": preflight.plan.inverse_curve_fit_result_path,
+                "sample_artifact_path": preflight.plan.inverse_sample_artifact_path,
+            },
+            preflight=preflight,
+        )
+        _print_issues(issues)
+        print(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "run_dir": str(run_dir.resolve()),
+                    "status": result.status,
+                    "analysis_ready": result.status == "computed",
+                    "plan_sha256": preflight.plan_sha256,
+                    "successful_estimates": result.successful_estimates,
+                    "total_sample_measurements": result.total_sample_measurements,
+                },
+                indent=2,
+            )
+        )
+        has_error = any(
+            issue.severity in {IssueSeverity.ERROR, IssueSeverity.BLOCKING} for issue in issues
+        )
+        return (
+            EXIT_OK
+            if result.status in {"computed", "partial"} and not has_error
+            else EXIT_QC_ERRORS
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        issue = _phase2a_issue(
+            "ELISA_INVERSE_EXECUTION_FAILED",
+            str(exc),
+            "Verify the plan path, explicit plan hash, and separate project-local "
+            "output directory.",
+        )
+        _print_issues([issue])
+        return EXIT_QC_ERRORS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "list-sheets":
@@ -1149,6 +1376,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_generate_4pl_plan(args)
     if args.command in {"execute-4pl", "execute-curve-fit"}:
         return _run_execute_4pl(args)
+    if args.command in {"generate-elisa-inverse-plan", "elisa-inverse-plan"}:
+        return _run_generate_elisa_inverse_plan(args)
+    if args.command in {"execute-elisa-inverse", "elisa-inverse"}:
+        return _run_execute_elisa_inverse(args)
     return EXIT_FATAL
 
 

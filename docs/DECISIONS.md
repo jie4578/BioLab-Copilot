@@ -99,3 +99,18 @@
 - **Context:** Standard inclusion, replicate aggregation, numerical bounds, starts, tolerances, and diagnostics affect the fitted result and must be reviewable before execution.
 - **Decision:** Generate `standards_preview.json` and an explicit `analysis_plan.json` containing the source/import hashes, mapping and parser configuration, standard inclusion/exclusion, units, direction, optimizer settings, bounds, starts, and diagnostic thresholds. Execution requires explicit confirmation of the resulting plan SHA-256 and recomputes/compares the preview and source bindings.
 - **Consequences:** Changed input, design, preview, direction, algorithm settings, or plan invalidates the previous confirmation. Every optimizer start is retained, failures are diagnostic, and numerical warnings do not become scientific validation.
+
+## ADR-015: Keep unknown-sample inverse estimation research-only and row-level
+
+- **Status:** Accepted for Phase 3B
+- **Context:** A numerical inverse of a fitted curve can be useful for exploratory work, but it does not establish assay validation, accuracy, precision, matrix compatibility, or a validated quantification range. Aggregating unknown repeats would also change the estimand without an explicit design rule.
+- **Decision:** Accept only an unchanged, converged Phase 3A 4PL result and process only `sample` records independently. Require explicit research-use acknowledgement, context compatibility declaration, and dilution-factor source. Preserve all source references; never aggregate unknown repeats, infer dilution, or change Phase 3A validation flags.
+- **Consequences:** Users receive transparent per-measurement estimates and null diagnostic rows for invalid or out-of-span responses. The capability cannot be presented as validated concentration reporting.
+
+## ADR-016: Use fitted endpoint responses and protected inverse arithmetic
+
+- **Status:** Accepted for Phase 3B
+- **Context:** Raw standard response extrema are affected by direction and noise. Direct exponentiation or logarithms at asymptotes can overflow or generate invalid values.
+- **Decision:** Define the engineering interpolation guard from the minimum and maximum positive fitted standard concentrations, classify concentration direction after a protected analytic inverse, and use fitted endpoint predictions for response-span diagnostics. Reject extrapolation, clip-free domain violations, asymptote-near values, non-finite corrections, and severe Phase 3A numerical diagnostics.
+- **Compatibility:** Phase 3B additions are optional fields on `AnalysisPlan` and `RunManifest`, plus new additive inverse contracts, while schema version remains `1.0`; older Phase 1-3A artifacts remain deserializable and are rejected for inverse execution unless all Phase 3B bindings are present.
+- **Consequences:** The inverse is deterministic and auditable, but it remains a research estimate and does not provide LOD/LLOQ/ULOQ, confidence intervals, blank correction, 5PL, or validated range claims.

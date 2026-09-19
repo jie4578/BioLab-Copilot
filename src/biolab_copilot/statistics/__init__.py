@@ -12,6 +12,15 @@ from .elisa_4pl import (
     four_pl_software_versions,
     validate_4pl_execution_inputs,
 )
+from .elisa_inverse import (
+    INVERSE_LIMITATIONS,
+    InverseExecutionPreflight,
+    InversePlanBuild,
+    build_inverse_plan,
+    compute_inverse_result,
+    inverse_software_versions,
+    validate_inverse_execution_inputs,
+)
 from .plans import (
     PHASE2A_CONFIRMATION_CODES,
     PHASE2A_STATISTICS,
@@ -57,4 +66,11 @@ __all__ = [
     "four_pl_predict",
     "four_pl_software_versions",
     "validate_4pl_execution_inputs",
+    "INVERSE_LIMITATIONS",
+    "InverseExecutionPreflight",
+    "InversePlanBuild",
+    "build_inverse_plan",
+    "compute_inverse_result",
+    "inverse_software_versions",
+    "validate_inverse_execution_inputs",
 ]

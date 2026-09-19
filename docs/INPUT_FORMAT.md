@@ -126,3 +126,31 @@ averaged arithmetically within the level; concentration levels, not wells, are e
 Duplicate complete standard records block fitting. Unequal repeat counts warn but do not change
 level weighting. A changed source artifact, mapping, design declaration, preview, direction,
 numerical setting, or plan invalidates the previous plan hash confirmation.
+
+## Phase 3B research-only inverse declaration
+
+Phase 3B consumes a completed Phase 3A `curve_fit_result.json`; it does not refit the curve. The
+inverse design must explicitly contain:
+
+| Field | Rule |
+| --- | --- |
+| `intended_use` | Exactly `research_only` |
+| `research_only_acknowledged` | Must be `true` |
+| `curve_context_compatibility_declared` | Must be `true`; user declaration, not software verification |
+| `sample_source_mode` | `same_import_artifact` or `separate_import_artifact` |
+| `dilution_factor_source` | `mapped_field` or `uniform_declared` |
+| `dilution_factor_field` | Exactly `dilution_factor` for `mapped_field` |
+| `uniform_dilution_factor` | Required and finite `>=1` for `uniform_declared`; `1` must be explicit |
+| `allow_extrapolation` | Exactly `false` |
+
+Only `sample_type=sample` rows receive an inverse attempt. Standard, blank, and control rows are
+retained as excluded source references. Each sample row remains separate even when `sample_id`,
+`replicate_id`, or repeat metadata are equal. No sample CV, SD, mean, or biological sample count
+is produced.
+
+The result fields are `concentration_in_assayed_sample`, `dilution_factor`, and
+`concentration_in_original_sample`. The last is calculated only for a successful finite estimate:
+`original = assayed * dilution_factor`. Missing factors never become `1`; invalid factors block
+the plan. Positive fitted standard concentrations define the interpolation guard. Rows outside
+it receive null concentration fields and a direction-aware diagnostic rather than an extrapolated
+number.

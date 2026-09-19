@@ -77,3 +77,12 @@ python scripts\generate_xlsx_templates.py
 - Phase 3A must not back-calculate unknown samples, implement 5PL, apply blank correction, weighting, robust loss, point deletion, unit conversion, LOD/LLOQ/ULOQ rules, charts, reports, AI/API calls, databases, network behavior, or formal UI.
 - Standard rows must remain traceable at both source-record and concentration-level views. Sample, blank, and control rows are retained but excluded from the fit.
 - Numerical convergence is not assay validation. Every successful result must state `curve_validated=false` and `quantification_enabled=false`.
+
+## Phase 3B implementation boundary
+
+- Phase 3B may implement only research-use, per-measurement unknown-sample inversion from an unchanged, converged Phase 3A 4PL result.
+- Require explicit `research_only_acknowledged=true`, explicit curve-context compatibility, and an explicit dilution-factor source. Never default a missing factor to 1.
+- Use only the positive observed standard concentration span as an interpolation guard. Do not extrapolate, clip responses, infer dilution, aggregate unknown repeats, calculate CV/SD, or claim validated quantification.
+- Preserve sample, standard, blank, and control source references. `curve_validated=false` and `validated_quantification_enabled=false` are immutable Phase 3A/3B semantics.
+- Boundary-limited, rank-deficient, severely ill-conditioned, non-converged, changed, or error-containing curve artifacts block inversion. Numeric row failures remain explicit and never become zero concentrations.
+- Phase 3B must not add 5PL, blank correction, LOD/LLOQ/ULOQ, charts, reports, AI/API calls, databases, network behavior, or formal UI. Do not enter a later phase after a failed quality check.
