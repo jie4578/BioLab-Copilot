@@ -26,6 +26,16 @@ render charts and Word/Excel/JSON packages; it does not recalculate or mutate up
 Phase 4B adds a thin local Gradio presentation layer over these same Python services; it does
 not create a second calculation path.
 
+Public-release preparation is outside the scientific runtime boundary. GitHub Actions may verify
+synthetic tests, declared dependencies, package contents, imports, CLI help, and UI construction,
+but it must not start a public server, upload artifacts, access real experiment data, or alter
+analysis outputs.
+
+Public-release preparation is outside the scientific runtime boundary. GitHub Actions may verify
+synthetic tests, declared dependencies, package contents, imports, CLI help, and UI construction,
+but it must not start a public server, upload artifacts, access real experiment data, or alter
+analysis outputs.
+
 ## Module responsibilities
 
 - `contracts`: versioned Pydantic models, enums, serialization, and JSON Schema. No I/O or scientific calculations.

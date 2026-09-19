@@ -3,6 +3,14 @@
 All notable changes are recorded here. This project follows a small, local pilot release
 sequence; entries do not imply clinical validation or production readiness.
 
+## [Unreleased]
+
+### Release preparation
+
+- Added public-repository guidance, security/contribution documentation, GitHub Actions CI
+  planning, and package-content inspection for a future local `0.1.0` release.
+- No scientific method, analysis result, or runtime network capability was added.
+
 ## [0.1.0] - 2026-09-19
 
 ### Added

@@ -1,0 +1,64 @@
+name: CI
+
+"on":
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality-and-package:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install project, test, UI, and template dependencies
+        run: python -m pip install -e ".[dev,ui,templates]"
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Run ruff
+        run: ruff check .
+
+      - name: Run mypy
+        run: mypy src
+
+      - name: Build wheel and source distribution
+        run: python -m build --sdist --wheel --outdir dist-ci
+
+      - name: Check distribution contents
+        shell: pwsh
+        run: |
+          $archives = @(Get-ChildItem -LiteralPath dist-ci -File | Select-Object -ExpandProperty FullName)
+          python scripts/check_release_artifacts.py $archives
+
+      - name: Install wheel without editable source
+        shell: pwsh
+        run: |
+          $wheel = (Get-ChildItem -LiteralPath dist-ci -Filter *.whl -File | Select-Object -First 1).FullName
+          python -m pip uninstall -y biolab-copilot
+          python -m pip install --no-deps $wheel
+
+      - name: Smoke-test installed wheel and UI construction
+        shell: pwsh
+        run: |
+          $env:PYTHONPATH = ""
+          $env:BIOLAB_PROJECT_ROOT = $env:GITHUB_WORKSPACE
+          Set-Location $env:RUNNER_TEMP
+          python -c "import biolab_copilot; assert biolab_copilot.__version__ == '0.1.0'; print(biolab_copilot.__version__)"
+          biolab-copilot --help
+          python -c "from biolab_copilot.ui.app import build_app; app = build_app(); print(type(app).__name__)"

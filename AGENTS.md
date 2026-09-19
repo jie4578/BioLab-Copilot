@@ -107,7 +107,16 @@ python scripts\generate_xlsx_templates.py
 - Report generation must use declared Python dependencies (`openpyxl`, `python-docx`, and the declared plotting stack) directly. It must not depend on Codex runtimes, Node/npm, artifact-tool, hidden executables, or subprocesses.
 - Release checks must not commit outputs, reports, temporary environments, caches, uploads, secrets, or `tests/phase2a-boundaries-lliqpk1e/`. Do not configure a remote, push, or create tags.
 - Runtime behavior remains local-only: no AI, LLM SDK, provider, database, telemetry, cloud interface, public sharing, or network feature. Missing optional helper runtimes must fail clearly rather than being silently downloaded.
-- Phase 4C changes remain uncommitted until explicit owner acceptance. Do not enter a later phase after a failed quality or release check.
+- Phase 4C is baselined in the local pilot commit; Phase 4D public-release-preparation changes remain uncommitted until explicit owner acceptance. Do not enter a later phase after a failed quality or release check.
+
+## Phase 4D implementation boundary
+
+- Phase 4D may add public-repository documentation, GitHub Actions configuration, package-content checks, security guidance, contribution guidance, and release checklists.
+- Phase 4D must not add scientific methods, change formulas or thresholds, modify data contracts, add AI/LLM/database/cloud behavior, configure a remote, push, create tags, or rewrite Git history.
+- CI may run only deterministic synthetic tests, declared dependency checks, wheel/sdist inspection, package import checks, CLI help, and UI construction smoke checks. It must not start a public server, upload artifacts, or access real experiment data.
+- Python 3.11 and 3.12 are CI-planned validation targets until their matrix jobs actually pass; local verification claims must remain limited to versions actually tested on the current host.
+- Public documentation must preserve research-use limitations, local-only privacy boundaries, provenance requirements, and the separation between deterministic computation and any future AI explanation layer.
+- All Phase 4D changes remain uncommitted and unstaged unless the owner explicitly authorizes a separate commit. Do not modify or delete `tests/phase2a-boundaries-lliqpk1e/`.
 
 ## Phase 4A implementation boundary
 

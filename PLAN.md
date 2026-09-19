@@ -6,7 +6,8 @@ Current delivery: Phase 1 is committed as `4bb5e06`; Phase 2A is committed as `1
 2B is committed as `fe549c9`; Phase 3A is baselined as `9280e0a`; Phase 3B is committed as
 `99a42974384258337b795435d605232a576f175e`; Phase 4A is committed as
 `8f232b340e354ff211cbfc7f953aaedf0c3aa280`; and Phase 4B is committed as
-`a9273a431488e1776eec00cb73653854ab0c9adf`. Phase 4C release hardening is the current
+`a9273a431488e1776eec00cb73653854ab0c9adf`; Phase 4C release hardening is committed as
+`6c6a1f8f9d82d73bf9dd86ee7fd5d0bf74c8b8d0`; Phase 4D public release preparation is the current
 uncommitted work.
 
 ## Phase 0 — Foundation and contracts
@@ -109,6 +110,16 @@ uncommitted work.
 - **Test method:** Full pytest, ruff, mypy, diff checks; editable-install and wheel metadata checks; synthetic UI smoke workflow where the supported interpreter and dependencies are available; secret/path/output scans.
 - **PASS standard:** The installer selects a supported 3.11-3.13 interpreter and the current Python 3.13 path is reproducible; UI remains local-only; package, UI, and report-manifest versions agree; Python-only reports reopen safely; no user data, reports, outputs, temporary environments, or secrets enter Git.
 - **Entry to next phase:** Owner accepts release evidence and known limitations. No Phase 4D or AI/cloud work begins automatically.
+
+### Phase 4D — GitHub public release preparation
+
+- **Goal:** Prepare a reviewable public-repository package without creating a remote, pushing, tagging, or adding scientific functionality.
+- **Allowed modification:** GitHub Actions CI configuration; README, changelog, architecture, security, contribution, installation, demo, acceptance, and release documentation; deterministic wheel/sdist content checks; release metadata and tests for these boundaries.
+- **Forbidden modification:** Scientific formulas, thresholds, data contracts, analysis behavior, AI/LLM/database/cloud features, user data, report outputs, history rewriting, remote configuration, push, tags, or release creation.
+- **Deliverables:** Python 3.11/3.12/3.13 CI matrix; pytest/ruff/mypy/build/import/help/UI-construction checks; package-content inspection; public security and contribution guidance; GitHub release instructions and checklist.
+- **Test method:** Local quality checks, YAML parsing, synthetic-only package/build checks, Git history and working-tree secret scans, and wheel/sdist inspection. CI itself must not upload artifacts or start a public server.
+- **PASS standard:** Public documentation is accurate and scoped; CI is parseable and contains no external scientific/provider step; wheel and sdist exclude private/generated artifacts; no sensitive current-tree or history finding remains unresolved; no remote/tag/push is created.
+- **Entry to next phase:** Owner reviews the public-release package and explicitly authorizes any future remote/push/tag action. Phase 4D changes remain uncommitted until that review.
 
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 

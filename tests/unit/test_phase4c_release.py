@@ -32,7 +32,7 @@ def test_windows_scripts_are_project_relative_and_use_local_venv() -> None:
     assert "3.12" in setup
     assert "3.11" in setup
     assert "BIOLAB_PROJECT_ROOT" in start
-    assert "C:\\Users\\Administrator" not in setup + start
+    assert "C:\\Users\\" not in setup + start
 
 
 def test_report_runtime_uses_declared_python_dependencies() -> None:

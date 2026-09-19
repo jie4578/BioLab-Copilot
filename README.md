@@ -14,8 +14,10 @@ committed as `99a42974384258337b795435d605232a576f175e` and adds research-only p
 inverse estimates. Phase 4A is committed as `8f232b340e354ff211cbfc7f953aaedf0c3aa280` and
 adds deterministic report packages. Phase 4B is committed as
 `a9273a431488e1776eec00cb73653854ab0c9adf` and adds a local-only Gradio pilot over the existing
-backends. Phase 4C is the current local pilot release-hardening work. The package version is
-`0.1.0`, sourced from `src/biolab_copilot/__init__.py` and exposed to packaging dynamically.
+backends. Phase 4C is committed as `6c6a1f8f9d82d73bf9dd86ee7fd5d0bf74c8b8d0` and hardens the
+local pilot for Windows packaging. Phase 4D is the current uncommitted public-release
+preparation work. The package version is `0.1.0`, sourced from
+`src/biolab_copilot/__init__.py` and exposed to packaging dynamically.
 
 Phase 2A and 2B intentionally contain no ELISA processing or fitting. Phase 3A intentionally
 contains no unknown-sample back-calculation. Automatic outlier handling, imputation,
@@ -241,3 +243,30 @@ result, confirmation, and report instructions are in
 [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md). The local pilot is not clinically validated, is not
 production-ready, and does not replace scientific review. Acceptance evidence and environment
 limits are recorded in [docs/PILOT_ACCEPTANCE.md](docs/PILOT_ACCEPTANCE.md).
+
+## Project map
+
+```mermaid
+flowchart LR
+    F[CSV / XLSX] --> I[Read-only ingestion]
+    I --> Q[Structural QC]
+    Q --> P[Explicit plan + SHA-256 confirmation]
+    P --> S[Deterministic statistics / 4PL]
+    S --> R[PNG + Word / Excel / JSON reports]
+    R --> U[Local Gradio UI]
+    S -. structured results only .-> A[Future optional AI explanation]
+```
+
+The current release has no AI implementation. Any future AI layer must receive only approved
+structured results and must not calculate, delete data, or change conclusions. Public-repository
+guidance, security rules, contribution instructions, and the release checklist are linked from
+[SECURITY.md](SECURITY.md), [CONTRIBUTING.md](CONTRIBUTING.md),
+[docs/GITHUB_RELEASE.md](docs/GITHUB_RELEASE.md), and
+[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
+
+## Quality status
+
+The current local baseline has 82 passing tests with `ruff`, `mypy`, and `git diff --check`
+passing. GitHub Actions configuration for Python 3.11, 3.12, and 3.13 is prepared in
+`.github/workflows/ci.yml`; Python 3.11 and 3.12 remain planned CI validation targets until
+their jobs actually run. No CI badge or unverified platform claim is shown here.
