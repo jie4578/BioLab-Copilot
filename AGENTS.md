@@ -87,6 +87,17 @@ python scripts\generate_xlsx_templates.py
 - Boundary-limited, rank-deficient, severely ill-conditioned, non-converged, changed, or error-containing curve artifacts block inversion. Numeric row failures remain explicit and never become zero concentrations.
 - Phase 3B must not add 5PL, blank correction, LOD/LLOQ/ULOQ, charts, reports, AI/API calls, databases, network behavior, or formal UI. Do not enter a later phase after a failed quality check.
 
+## Phase 4B implementation boundary
+
+- Phase 4B is a local-only Gradio presentation boundary over the already implemented ingestion, QC, statistics, and reporting functions.
+- The UI must use direct Python service calls; it must not invoke the CLI through subprocesses or duplicate scientific formulas.
+- Experiment type, worksheet, column mapping, design declaration, plan SHA-256, warning confirmations, and report sources must be explicit user inputs.
+- Session artifacts belong under `outputs/ui-sessions/<session-id>/`. Every download must resolve inside that session, reject traversal and absolute paths, and expose only session-relative names.
+- Bind the server to `127.0.0.1`, use `share=False`, disable analytics, and do not add AI, LLM SDKs, databases, telemetry, cloud interfaces, or network features.
+- Do not infer experimental units, independence, pairing, dilution, replicate type, or assay meaning. Preserve research-only ELISA semantics and all upstream QC warnings.
+- A changed input, mapping, design, preview, or plan hash invalidates prior confirmation. Error/blocking QC always prevents execution.
+- UI tests must be offline and must cover session isolation, stale confirmations, blocking behavior, path safety, and report download scope. Do not advance to a later phase after a failed test or quality check.
+
 ## Phase 4A implementation boundary
 
 - Phase 4A may render deterministic PNG charts and fixed Word/Excel/JSON report packages from completed, hash-validated Phase 2A, Phase 2B, Phase 3A, and optional Phase 3B artifacts.

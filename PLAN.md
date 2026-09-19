@@ -88,6 +88,16 @@ Later phases have not started.
 - **PASS standard:** Every successful report package contains `report.docx`, `report.xlsx`, `report_data.json`, `report_manifest.json`, and chart PNGs. All upstream hashes and confirmed-plan bindings validate; outputs contain no `NaN`, `Infinity`, secrets, or absolute local paths; XLSX has no formulas/macros/external links; DOCX reopens without external relationships; source artifacts remain unchanged.
 - **Entry to next phase:** Owner accepts the report artifacts, safety evidence, and known limitations. Stop; do not enter AI interpretation, UI, PDF, or release work automatically.
 
+### Phase 4B — Local-first Gradio pilot UI
+
+- **Goal:** Provide a simple, local-only presentation layer for the already implemented import, QC, confirmed analysis, and deterministic reporting workflows.
+- **Allowed modification:** `ui`, optional Gradio packaging metadata, UI service tests, Windows startup guidance, and documentation. The service may call existing ingestion, profiling, statistics, and reporting functions directly.
+- **Forbidden modification:** Scientific formulas or thresholds; CLI subprocess execution; implicit assay or design inference; source mutation; QC bypass; AI, LLM SDKs, databases, telemetry, cloud/network interfaces, or public sharing.
+- **Deliverables:** Explicit assay/mapping/design controls; plan SHA-256 and warning-confirmation UX; per-session `outputs/ui-sessions/<session-id>/` isolation; display-safe issue/result summaries; safe report downloads; local startup module and `start_local.bat`.
+- **Test method:** Offline service-layer tests for session isolation, stale-plan/input confirmation, error/blocking prevention, report download scope, path traversal, and app construction. Run local launch/smoke checks when the runtime permits.
+- **PASS standard:** UI binds only to `127.0.0.1`, uses `share=False` and disabled analytics, calls no subprocess/provider/network/database, refuses changed or unconfirmed plans, preserves research-only ELISA semantics, and exposes only session-relative paths.
+- **Entry to next phase:** Owner accepts the UI workflow and security evidence. Stop; do not add AI, cloud, database, or release behavior automatically.
+
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 
 - **Goal:** Execute only confirmed plans with reproducible statistics for the two supported assays.

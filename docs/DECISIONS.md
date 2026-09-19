@@ -122,3 +122,11 @@
 - **Decision:** Accept only completed, hash-validated upstream artifacts at the expected assay and analysis level. Render fixed PNG charts and value-only Word/Excel/JSON packages from those artifacts. Use no formulas, macros, external links, network calls, AI providers, or recalculation in the reporting layer. Preserve source and manifest hashes by role and use project-relative output paths.
 - **Compatibility:** Phase 4A adds `ReportManifest` and report renderers without changing the scientific meaning of Phase 1 through Phase 3B contracts. Existing upstream JSON remains readable; invalid or changed artifacts are rejected at the report boundary.
 - **Consequences:** Presentation is inspectable and offline, and report content cannot silently diverge through a second statistical implementation. OOXML archive metadata or library-generated relationship identifiers may vary between binary exports even when `report_data.json`, chart bytes, sheet values, and scientific content are identical; report creation time remains explicit in the manifest.
+
+## ADR-018: Make Phase 4B a thin local service over existing backends
+
+- **Status:** Accepted for Phase 4B
+- **Context:** A pilot UI must be usable by non-programmers without creating a second implementation of ingestion, QC, statistics, plan confirmation, or report rendering.
+- **Decision:** Keep Gradio-specific code in `ui/app.py` and put workflow orchestration, session isolation, explicit confirmation, path checks, and display-safe summaries in `ui/service.py`. The service calls the existing Python backend functions directly and never starts the CLI through a subprocess. Each session writes only below `outputs/ui-sessions/<session-id>/`.
+- **Security and compatibility:** The server binds to `127.0.0.1`, uses `share=False`, disables analytics, rejects traversal and absolute download paths, and does not add AI, database, telemetry, cloud, or network functionality. Existing scientific contracts and report validation remain authoritative; UI paths shown to users are session-relative.
+- **Consequences:** The pilot inherits the deterministic backends and their safety checks, but it is not a replacement for a full production UI, authentication system, retention policy, or browser automation test suite.

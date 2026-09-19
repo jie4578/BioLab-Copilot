@@ -23,7 +23,8 @@ two-group `generic_grouped` Welch comparison at `experimental_units` level. Phas
 separate standard-only ELISA 4PL boundary at `standard_curve_levels`; Phase 3B adds only the
 research-only per-measurement inverse boundary. Phase 4A consumes these completed artifacts to
 render charts and Word/Excel/JSON packages; it does not recalculate or mutate upstream results.
-AI, batch orchestration, and UI remain out of scope.
+Phase 4B adds a thin local Gradio presentation layer over these same Python services; it does
+not create a second calculation path.
 
 ## Module responsibilities
 
@@ -37,7 +38,9 @@ AI, batch orchestration, and UI remain out of scope.
 - `audit`: future run-manifest persistence and provenance checks.
 - `ai`: future optional adapter that receives structured results and returns labeled narrative only.
 - `batch`: future orchestration for multiple independent runs with isolated manifests.
-- `ui`: future presentation layer; it must not own scientific rules.
+- `ui`: Phase 4B session service and Gradio presentation layer. It owns session isolation,
+  explicit user input, plan confirmation UX, display-safe summaries, report downloads, and
+  path containment. It does not own assay rules, calculations, or CLI subprocess execution.
 
 ## Data flow
 
@@ -46,12 +49,14 @@ Phase 1 `ImportResult` -> unconfirmed `AnalysisPlan` -> explicit design/unit or 
 -> plan-hash and warning confirmation -> Phase 2A row-level, Phase 2B unit-level, or Phase 3A
 standard-level structured result -> Phase 3B research-only measurement-row inverse (when
 explicitly confirmed) -> Phase 4A `ChartArtifact` / `ReportArtifact` package -> `RunManifest`.
+The Phase 4B UI service invokes these existing boundaries directly and writes each browser
+session below `outputs/ui-sessions/<session-id>/`; its public paths are session-relative.
 
 The original file is never replaced by a derived table. Any future derived representation must carry its source hash and transformation metadata. Warnings and unresolved issues travel with the run.
 
 ## Dependency direction
 
-Dependencies point inward toward contracts. Ingestion, profiling, assays, statistics, visualization, reporting, AI, batch, and UI may depend on contracts, but contracts must not depend on any of them. Phase 2A, 2B, 3A, and 3B statistics consume the read-only Phase 1 import contract and ingestion hash helper; SciPy is isolated at the Welch and 4PL calculation boundaries. Phase 3B consumes a validated Phase 3A artifact and never refits the curve. Phase 4A reporting consumes validated JSON artifacts and hashes, while chart code consumes already-computed values. These modules must not depend on UI, AI, database, or network code. AI may depend on a read-only result DTO and an explicit provider adapter, never on a data-frame execution environment. Reporting may consume artifacts but must not calculate statistics.
+Dependencies point inward toward contracts. Ingestion, profiling, assays, statistics, visualization, reporting, AI, batch, and UI may depend on contracts, but contracts must not depend on any of them. Phase 2A, 2B, 3A, and 3B statistics consume the read-only Phase 1 import contract and ingestion hash helper; SciPy is isolated at the Welch and 4PL calculation boundaries. Phase 3B consumes a validated Phase 3A artifact and never refits the curve. Phase 4A reporting consumes validated JSON artifacts and hashes, while chart code consumes already-computed values. These modules must not depend on UI, AI, database, or network code. The UI depends on the existing ingestion, profiling, statistics, and reporting service functions only; it never invokes the CLI as a subprocess. AI may depend on a read-only result DTO and an explicit provider adapter, never on a data-frame execution environment. Reporting may consume artifacts but must not calculate statistics.
 
 ## Future plugin interface
 

@@ -10,12 +10,15 @@ read-only CSV/XLSX ingestion, explicit mappings, type parsing, structural QC, an
 outputs. Phase 2A adds confirmed measurement-row descriptive statistics for `generic_grouped`.
 Phase 2B adds a confirmed, two-group, experimental-unit-level Welch comparison. Phase 3A is
 baselined locally as `9280e0a` and adds a confirmed, standard-only ELISA 4PL fit. Phase 3B is
-the current uncommitted work and adds research-only per-measurement inverse estimates.
+committed as `99a42974384258337b795435d605232a576f175e` and adds research-only per-measurement
+inverse estimates. Phase 4A is committed as `8f232b340e354ff211cbfc7f953aaedf0c3aa280` and
+adds deterministic report packages. Phase 4B is the current uncommitted work and adds a
+local-only Gradio pilot over the existing backends.
 
 Phase 2A and 2B intentionally contain no ELISA processing or fitting. Phase 3A intentionally
 contains no unknown-sample back-calculation. Automatic outlier handling, imputation,
 transformation, unit conversion, chart, AI integration, report renderer, database, network
-function, or formal UI remain out of scope. Phase 2B does not prove independence and does not
+function remains out of scope for the scientific core. Phase 2B does not prove independence and does not
 infer biological sample size. Phase 3B preserves `curve_validated=false` and
 `validated_quantification_enabled=false`, requires explicit research-use acknowledgement, does
 not aggregate unknown repeats, and refuses extrapolation outside the positive standard span.
@@ -189,3 +192,21 @@ measurement-row descriptions, the Welch report consumes Phase 2B experimental-un
 the ELISA report consumes Phase 3A standard-only diagnostics with optional Phase 3B research-only
 per-measurement estimates. Report generation does not imply assay validation or biological
 independence. See [docs/REPORTING_DEFINITIONS.md](docs/REPORTING_DEFINITIONS.md).
+
+## Phase 4B local UI
+
+Install the optional UI dependency in the project environment and start the local pilot:
+
+```powershell
+python -m pip install -e ".[ui]"
+python -m biolab_copilot.ui
+# or double-click start_local.bat on Windows
+```
+
+The pilot listens only on `127.0.0.1`, uses `share=False`, disables analytics, and creates a
+fresh `outputs/ui-sessions/<session-id>/` directory for each session. It calls the existing
+Python services directly and never invokes the CLI through a subprocess. Users must explicitly
+choose the assay, worksheet, mapping, analysis design, warning confirmations, and plan SHA-256.
+Error/blocking QC prevents execution, source files remain unchanged, and downloads are limited
+to files generated in the current session. ELISA inverse results remain research-only and are
+never treated as validated quantification.
