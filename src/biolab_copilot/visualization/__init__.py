@@ -1,1 +1,1 @@
-"""Phase 3 placeholder: chart generation is intentionally not implemented."""
+"""Deterministic chart rendering from structured analysis results."""

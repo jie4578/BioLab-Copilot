@@ -114,3 +114,11 @@
 - **Decision:** Define the engineering interpolation guard from the minimum and maximum positive fitted standard concentrations, classify concentration direction after a protected analytic inverse, and use fitted endpoint predictions for response-span diagnostics. Reject extrapolation, clip-free domain violations, asymptote-near values, non-finite corrections, and severe Phase 3A numerical diagnostics.
 - **Compatibility:** Phase 3B additions are optional fields on `AnalysisPlan` and `RunManifest`, plus new additive inverse contracts, while schema version remains `1.0`; older Phase 1-3A artifacts remain deserializable and are rejected for inverse execution unless all Phase 3B bindings are present.
 - **Consequences:** The inverse is deterministic and auditable, but it remains a research estimate and does not provide LOD/LLOQ/ULOQ, confidence intervals, blank correction, 5PL, or validated range claims.
+
+## ADR-017: Keep Phase 4A as a read-only deterministic presentation boundary
+
+- **Status:** Accepted for Phase 4A
+- **Context:** Charts and scientific reports can accidentally become a second calculation path or silently change the meaning of upstream results. Word and Excel files also carry executable or external-link risks if generated through unconstrained templates.
+- **Decision:** Accept only completed, hash-validated upstream artifacts at the expected assay and analysis level. Render fixed PNG charts and value-only Word/Excel/JSON packages from those artifacts. Use no formulas, macros, external links, network calls, AI providers, or recalculation in the reporting layer. Preserve source and manifest hashes by role and use project-relative output paths.
+- **Compatibility:** Phase 4A adds `ReportManifest` and report renderers without changing the scientific meaning of Phase 1 through Phase 3B contracts. Existing upstream JSON remains readable; invalid or changed artifacts are rejected at the report boundary.
+- **Consequences:** Presentation is inspectable and offline, and report content cannot silently diverge through a second statistical implementation. OOXML archive metadata or library-generated relationship identifiers may vary between binary exports even when `report_data.json`, chart bytes, sheet values, and scientific content are identical; report creation time remains explicit in the manifest.

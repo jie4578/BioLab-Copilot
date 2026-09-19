@@ -86,3 +86,12 @@ python scripts\generate_xlsx_templates.py
 - Preserve sample, standard, blank, and control source references. `curve_validated=false` and `validated_quantification_enabled=false` are immutable Phase 3A/3B semantics.
 - Boundary-limited, rank-deficient, severely ill-conditioned, non-converged, changed, or error-containing curve artifacts block inversion. Numeric row failures remain explicit and never become zero concentrations.
 - Phase 3B must not add 5PL, blank correction, LOD/LLOQ/ULOQ, charts, reports, AI/API calls, databases, network behavior, or formal UI. Do not enter a later phase after a failed quality check.
+
+## Phase 4A implementation boundary
+
+- Phase 4A may render deterministic PNG charts and fixed Word/Excel/JSON report packages from completed, hash-validated Phase 2A, Phase 2B, Phase 3A, and optional Phase 3B artifacts.
+- Report code must not recalculate statistics, refit curves, modify source files, alter plans, change upstream results, infer biological sample size, or silently omit records. It must preserve upstream warnings and provenance.
+- Report packages must use stable templates and labels, project-relative output paths, strict JSON, no formulas/macros/external links, and no absolute local paths or secrets. Word output must be reopenable and carry no external relationships.
+- Phase 4A must remain offline and must not add an LLM SDK, provider, database, network call, formal UI, PDF workflow, 5PL, or new scientific method. Chart code consumes structured results only.
+- Failure to validate an upstream manifest, artifact hash, schema, plan confirmation, or report artifact is a report failure; it must not produce a successful manifest.
+- This phase ends after CLI, content, OOXML, safety, and synthetic visual checks. Do not enter AI, UI, or validation-claim work automatically.

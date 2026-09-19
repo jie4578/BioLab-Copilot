@@ -1,0 +1,7 @@
+sample_id,group,measurement,experimental_unit_id,replicate_type,technical_replicate_id
+A-1,A,1,UA-1,biological,
+A-2,A,2,UA-2,biological,
+A-3,A,3,UA-3,biological,
+B-1,B,4,UB-1,biological,
+B-2,B,5,UB-2,biological,
+B-3,B,6,UB-3,biological,

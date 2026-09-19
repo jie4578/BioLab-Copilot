@@ -1,0 +1,8 @@
+{
+  "sample_id": "sample_id",
+  "group": "group",
+  "measurement": "measurement",
+  "experimental_unit_id": "experimental_unit_id",
+  "replicate_type": "replicate_type",
+  "technical_replicate_id": "technical_replicate_id"
+}

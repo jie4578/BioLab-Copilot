@@ -17,6 +17,8 @@ from .enums import IssueSeverity, RunStatus
 SCHEMA_VERSION = "1.0"
 AssayType = Literal["generic_grouped", "elisa_standard_curve"]
 AnalysisLevel = Literal["measurement_rows", "experimental_units", "standard_curve_levels"]
+ReportType = Literal["generic_grouped", "welch_two_group", "elisa_4pl"]
+ReportStatus = Literal["COMPLETED", "FAILED"]
 DescriptiveStatisticName = Literal["n_measurements", "mean", "median", "min", "max", "sample_sd"]
 IndependentTwoGroupDesignType = Literal["independent_two_group"]
 TechnicalRepeatPolicy = Literal["none", "mean"]
@@ -444,6 +446,26 @@ class ReportArtifact(ContractBaseModel):
     source_manifest_sha256: str = Field(pattern=r"^[0-9a-fA-F]{64}$")
 
 
+class ReportManifest(ContractBaseModel):
+    """Traceability envelope for a deterministic report package.
+
+    Paths in this manifest are logical package-relative names. Upstream source
+    paths are intentionally represented only by role and hash.
+    """
+
+    report_id: str = Field(min_length=1)
+    report_version: str = Field(default="1.0", pattern=r"^\d+\.\d+$")
+    report_type: ReportType
+    status: ReportStatus
+    source_manifests: dict[str, str] = Field(default_factory=dict)
+    source_artifacts: dict[str, str] = Field(default_factory=dict)
+    configuration: dict[str, Any] = Field(default_factory=dict)
+    software_versions: dict[str, str] = Field(default_factory=dict)
+    output_files: list[ArtifactFile] = Field(default_factory=list)
+    warnings: list[ValidationIssue] = Field(default_factory=list)
+    created_at: datetime
+
+
 class InputFile(ContractBaseModel):
     """Immutable input-file identity recorded by a run manifest."""
 
@@ -547,6 +569,9 @@ __all__ = [
     "ImportedRecord",
     "FieldProfile",
     "ReportArtifact",
+    "ReportManifest",
+    "ReportStatus",
+    "ReportType",
     "RunManifest",
     "StatisticRecord",
     "DescriptiveStatisticName",

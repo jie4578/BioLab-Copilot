@@ -10,6 +10,7 @@ dist/
 
 # Local environments and secrets
 .venv/
+node_modules/
 .env
 .env.*
 !.env.example
@@ -27,4 +28,3 @@ outputs/
 .vscode/
 .DS_Store
 Thumbs.db
-

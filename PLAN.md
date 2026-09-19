@@ -78,6 +78,16 @@ Later phases have not started.
 - **PASS standard:** Only an explicitly confirmed plan bound to an unchanged, converged, non-severe Phase 3A curve runs. Every result states research-only semantics, no output contains `NaN` or `Infinity`, no row is silently aggregated or extrapolated, and numerical errors return a nonzero diagnostic status.
 - **Entry to next phase:** Owner and scientific reviewer accept the Phase 3B evidence. Stop; do not enter charts, reports, AI, UI, LOD/LLOQ/ULOQ, or any validation claim.
 
+### Phase 4A — Deterministic charts and Word/Excel/JSON reports
+
+- **Goal:** Render reviewable report packages from completed, hash-validated Phase 2A, Phase 2B, Phase 3A, and optional Phase 3B artifacts without recalculating or mutating upstream results.
+- **Allowed modification:** `visualization`, `reporting`, additive report contracts, fixed report templates, offline report CLI commands, synthetic acceptance fixtures, OOXML safety checks, and reporting documentation.
+- **Forbidden modification:** Any new scientific calculation; source or upstream artifact mutation; plan changes; automatic row exclusion; formulas, macros, external links, network, AI, database, PDF workflow, UI, 5PL, blank correction, or validation claims.
+- **Deliverables:** Deterministic chart functions; upstream schema/hash/semantic validation; `ReportManifest`; strict `report_data.json`; value-only XLSX; fixed DOCX; report-specific source and warning sections; isolated output directories.
+- **Test method:** Contract round trips; deterministic chart-byte checks; synthetic generic, Welch, and ELISA CLI packages; report content checks; DOCX reopen and OOXML relationship scans; XLSX reopen, formula/macro/external-link scans; absolute-path and strict-JSON scans; offline execution checks.
+- **PASS standard:** Every successful report package contains `report.docx`, `report.xlsx`, `report_data.json`, `report_manifest.json`, and chart PNGs. All upstream hashes and confirmed-plan bindings validate; outputs contain no `NaN`, `Infinity`, secrets, or absolute local paths; XLSX has no formulas/macros/external links; DOCX reopens without external relationships; source artifacts remain unchanged.
+- **Entry to next phase:** Owner accepts the report artifacts, safety evidence, and known limitations. Stop; do not enter AI interpretation, UI, PDF, or release work automatically.
+
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 
 - **Goal:** Execute only confirmed plans with reproducible statistics for the two supported assays.

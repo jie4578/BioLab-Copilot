@@ -159,3 +159,33 @@ The output is per measurement row and uses
 `concentration_in_assayed_sample`, `dilution_factor`, and
 `concentration_in_original_sample`. Out-of-span rows remain null and diagnostic rather than
 being extrapolated. See [docs/ELISA_4PL_INVERSE_DEFINITIONS.md](docs/ELISA_4PL_INVERSE_DEFINITIONS.md).
+
+## Phase 4A reporting CLI
+
+Phase 4A renders deterministic charts and fixed Word/Excel/JSON report packages from completed,
+hash-validated upstream artifacts. It never recalculates statistics, refits a curve, changes a
+plan, or edits an upstream run. The output directory must be new and must remain inside the
+project:
+
+```powershell
+$env:PYTHONPATH = "$PWD\src"
+python -m biolab_copilot.cli render-generic-report `
+  --analysis-dir outputs\phase2a\<run> `
+  --output-dir outputs\reports\generic-<run>
+
+python -m biolab_copilot.cli render-welch-report `
+  --analysis-dir outputs\phase2b\<run> `
+  --output-dir outputs\reports\welch-<run>
+
+python -m biolab_copilot.cli render-elisa-report `
+  --curve-dir outputs\phase3a\<run> `
+  --inverse-dir outputs\phase3b\<run> `
+  --output-dir outputs\reports\elisa-<run>
+```
+
+Each successful package contains `report.docx`, `report.xlsx`, `report_data.json`,
+`report_manifest.json`, and deterministic PNG charts. The generic report consumes Phase 2A
+measurement-row descriptions, the Welch report consumes Phase 2B experimental-unit results, and
+the ELISA report consumes Phase 3A standard-only diagnostics with optional Phase 3B research-only
+per-measurement estimates. Report generation does not imply assay validation or biological
+independence. See [docs/REPORTING_DEFINITIONS.md](docs/REPORTING_DEFINITIONS.md).

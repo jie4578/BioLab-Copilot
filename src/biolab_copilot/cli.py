@@ -42,6 +42,12 @@ from biolab_copilot.ingestion import (
     sha256_file,
 )
 from biolab_copilot.profiling import profile_and_validate
+from biolab_copilot.reporting import (
+    ReportRenderError,
+    render_elisa_report,
+    render_generic_report,
+    render_welch_report,
+)
 from biolab_copilot.statistics import (
     build_4pl_plan,
     build_analysis_plan,
@@ -372,6 +378,28 @@ def _build_parser() -> argparse.ArgumentParser:
     inverse_execute_parser.add_argument("plan_file")
     inverse_execute_parser.add_argument("--confirm-plan-sha256", required=True)
     inverse_execute_parser.add_argument("--output-dir", default="outputs/phase3b")
+
+    generic_report_parser = subparsers.add_parser(
+        "render-generic-report",
+        help="Render a deterministic generic descriptive report from one Phase 2A run",
+    )
+    generic_report_parser.add_argument("--analysis-dir", required=True)
+    generic_report_parser.add_argument("--output-dir", required=True)
+
+    welch_report_parser = subparsers.add_parser(
+        "render-welch-report",
+        help="Render a deterministic Welch report from one Phase 2B run",
+    )
+    welch_report_parser.add_argument("--analysis-dir", required=True)
+    welch_report_parser.add_argument("--output-dir", required=True)
+
+    elisa_report_parser = subparsers.add_parser(
+        "render-elisa-report",
+        help="Render a deterministic ELISA 4PL report from explicit Phase 3A/3B runs",
+    )
+    elisa_report_parser.add_argument("--curve-dir", required=True)
+    elisa_report_parser.add_argument("--inverse-dir")
+    elisa_report_parser.add_argument("--output-dir", required=True)
     return parser
 
 
@@ -1356,6 +1384,61 @@ def _run_execute_elisa_inverse(args: argparse.Namespace) -> int:
         return EXIT_QC_ERRORS
 
 
+def _run_render_generic_report(args: argparse.Namespace) -> int:
+    try:
+        manifest_path = render_generic_report(
+            _path_inside_project(args.analysis_dir),
+            _path_inside_project(args.output_dir),
+        )
+        print(
+            json.dumps(
+                {"report_manifest": str(manifest_path.resolve()), "status": "COMPLETED"},
+                indent=2,
+            )
+        )
+        return EXIT_OK
+    except ReportRenderError as exc:
+        print(f"blocking: REPORT_RENDER_FAILED: {exc}", file=sys.stderr)
+        return EXIT_QC_ERRORS
+
+
+def _run_render_welch_report(args: argparse.Namespace) -> int:
+    try:
+        manifest_path = render_welch_report(
+            _path_inside_project(args.analysis_dir),
+            _path_inside_project(args.output_dir),
+        )
+        print(
+            json.dumps(
+                {"report_manifest": str(manifest_path.resolve()), "status": "COMPLETED"},
+                indent=2,
+            )
+        )
+        return EXIT_OK
+    except ReportRenderError as exc:
+        print(f"blocking: REPORT_RENDER_FAILED: {exc}", file=sys.stderr)
+        return EXIT_QC_ERRORS
+
+
+def _run_render_elisa_report(args: argparse.Namespace) -> int:
+    try:
+        manifest_path = render_elisa_report(
+            _path_inside_project(args.curve_dir),
+            _path_inside_project(args.output_dir),
+            _path_inside_project(args.inverse_dir) if args.inverse_dir else None,
+        )
+        print(
+            json.dumps(
+                {"report_manifest": str(manifest_path.resolve()), "status": "COMPLETED"},
+                indent=2,
+            )
+        )
+        return EXIT_OK
+    except ReportRenderError as exc:
+        print(f"blocking: REPORT_RENDER_FAILED: {exc}", file=sys.stderr)
+        return EXIT_QC_ERRORS
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     if args.command == "list-sheets":
@@ -1380,6 +1463,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _run_generate_elisa_inverse_plan(args)
     if args.command in {"execute-elisa-inverse", "elisa-inverse"}:
         return _run_execute_elisa_inverse(args)
+    if args.command == "render-generic-report":
+        return _run_render_generic_report(args)
+    if args.command == "render-welch-report":
+        return _run_render_welch_report(args)
+    if args.command == "render-elisa-report":
+        return _run_render_elisa_report(args)
     return EXIT_FATAL
 
 

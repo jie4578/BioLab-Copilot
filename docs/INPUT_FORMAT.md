@@ -154,3 +154,12 @@ The result fields are `concentration_in_assayed_sample`, `dilution_factor`, and
 the plan. Positive fitted standard concentrations define the interpolation guard. Rows outside
 it receive null concentration fields and a direction-aware diagnostic rather than an extrapolated
 number.
+
+## Phase 4A report inputs
+
+Report rendering does not accept raw CSV/XLSX directly. It accepts only project-local completed
+analysis run directories produced by the prior phases. The renderer rechecks the run manifest,
+artifact hashes, schema version, assay type, analysis level, confirmed plan, and immutable
+Phase 3A/3B semantics before creating a report package. A changed input file, plan, preview,
+result, or manifest therefore invalidates the report source. The renderer never repairs or
+rewrites the upstream import artifact.
