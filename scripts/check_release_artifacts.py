@@ -53,11 +53,35 @@ def _check_archive(path: Path) -> int:
     return len(names)
 
 
+def _expand_archives(paths: list[Path]) -> list[Path]:
+    archives: list[Path] = []
+    for path in paths:
+        if path.is_dir():
+            directory_archives = sorted(
+                (
+                    candidate
+                    for candidate in path.iterdir()
+                    if candidate.is_file()
+                    and (
+                        candidate.suffix == ".whl"
+                        or candidate.name.endswith(".tar.gz")
+                    )
+                ),
+                key=lambda candidate: candidate.name,
+            )
+            if not directory_archives:
+                raise ValueError(f"No distribution archives found in: {path}")
+            archives.extend(directory_archives)
+        else:
+            archives.append(path)
+    return archives
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("archives", nargs="+", type=Path)
     args = parser.parse_args()
-    for archive in args.archives:
+    for archive in _expand_archives(args.archives):
         _check_archive(archive)
     return 0
 

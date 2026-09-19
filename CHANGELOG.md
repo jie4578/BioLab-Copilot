@@ -9,6 +9,9 @@ sequence; entries do not imply clinical validation or production readiness.
 
 - Added public-repository guidance, security/contribution documentation, GitHub Actions CI
   planning, and package-content inspection for a future local `0.1.0` release.
+- Constrained NumPy to `>=2.0,<2.5` so the Python 3.11-3.13 support range cannot silently
+  resolve a newer NumPy release whose type declarations are incompatible with the project's
+  Python 3.11 mypy target.
 - No scientific method, analysis result, or runtime network capability was added.
 
 ## [0.1.0] - 2026-09-19
