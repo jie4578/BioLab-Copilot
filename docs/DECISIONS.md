@@ -130,3 +130,37 @@
 - **Decision:** Keep Gradio-specific code in `ui/app.py` and put workflow orchestration, session isolation, explicit confirmation, path checks, and display-safe summaries in `ui/service.py`. The service calls the existing Python backend functions directly and never starts the CLI through a subprocess. Each session writes only below `outputs/ui-sessions/<session-id>/`.
 - **Security and compatibility:** The server binds to `127.0.0.1`, uses `share=False`, disables analytics, rejects traversal and absolute download paths, and does not add AI, database, telemetry, cloud, or network functionality. Existing scientific contracts and report validation remain authoritative; UI paths shown to users are session-relative.
 - **Consequences:** The pilot inherits the deterministic backends and their safety checks, but it is not a replacement for a full production UI, authentication system, retention policy, or browser automation test suite.
+
+## ADR-019: Use one package version source for the local pilot release
+
+- **Status:** Accepted for Phase 4C
+- **Context:** Duplicated version literals can make the UI, wheel metadata, and report manifests disagree.
+- **Decision:** Keep the release version in `src/biolab_copilot/__init__.py`, expose it through
+  `tool.setuptools.dynamic` in `pyproject.toml`, and import the same value from UI and reporting
+  code. Contract schema versions and report schema versions remain separate compatibility values.
+- **Consequences:** Updating a release version requires one source edit and a packaging check;
+  schema compatibility is not changed by a pilot release version change.
+
+## ADR-020: Keep Windows setup and startup project-relative
+
+- **Status:** Accepted for Phase 4C
+- **Context:** A double-clicked batch file has no reliable current working directory, and a global
+  Python install would weaken reproducibility and alter user system state.
+- **Decision:** Resolve `%~dp0`, create/use `.venv`, select a Python 3.11-3.13 interpreter with
+  preference for Python 3.13, and fail visibly with diagnostic text. The scripts do not modify
+  system Python, PATH, registry, or security settings.
+- **Consequences:** Users must install one supported interpreter and declared dependencies once;
+  Python 3.13 is the current verified Windows runtime, while 3.11 and 3.12 remain unverified on
+  this host. The pilot remains isolated to the project environment.
+
+## ADR-021: Resolve report helper runtimes without developer-machine paths
+
+- **Status:** Accepted for Phase 4C
+- **Context:** The report renderer previously contained a development-machine absolute fallback
+  path, which is not portable and could disclose local layout.
+- **Decision:** Render DOCX and XLSX directly through declared Python dependencies (`python-docx`
+  and `openpyxl`). Do not use Node, npm, artifact-tool, Codex runtime modules, hidden executable
+  paths, or subprocesses for report generation.
+- **Consequences:** Wheel installs contain the complete report renderer and need no environment-
+  specific helper runtime. Report semantics, value-only workbooks, and research-use limitations
+  remain unchanged.

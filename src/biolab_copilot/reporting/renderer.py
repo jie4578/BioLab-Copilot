@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import platform
-import subprocess
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import docx
 import matplotlib
+import openpyxl
 
 from biolab_copilot import __version__
 from biolab_copilot.contracts import (
@@ -23,6 +22,7 @@ from biolab_copilot.contracts import (
     SampleConcentrationsResult,
     StandardsPreview,
 )
+from biolab_copilot.paths import project_root
 from biolab_copilot.visualization.charts import (
     render_elisa_curve_chart,
     render_elisa_residual_chart,
@@ -31,6 +31,8 @@ from biolab_copilot.visualization.charts import (
     render_welch_chart,
 )
 
+from ._portable_docx import write_docx
+from ._portable_xlsx import write_xlsx
 from .validation import (
     AnalysisPackage,
     UpstreamValidationError,
@@ -61,10 +63,11 @@ def _safe_string(value: Any) -> str | None:
     text = str(value)
     if len(text) > 500:
         text = text[:500]
-    project_root = str(Path(__file__).resolve().parents[3])
-    text = text.replace(project_root, "<project>")
-    text = text.replace("C:\\Users\\Administrator", "<local-user>")
-    text = text.replace("C:/Users/Administrator", "<local-user>")
+    root = str(project_root())
+    text = text.replace(root, "<project>")
+    home = str(Path.home())
+    text = text.replace(home, "<local-user>")
+    text = text.replace(home.replace("\\", "/"), "<local-user>")
     return text
 
 
@@ -109,10 +112,10 @@ def _artifact_roles(package: AnalysisPackage) -> dict[str, str]:
 
 
 def _new_output_dir(output_dir: Path) -> Path:
-    project_root = Path(__file__).resolve().parents[3]
+    root = project_root()
     resolved = output_dir.resolve()
     try:
-        resolved.relative_to(project_root.resolve())
+        resolved.relative_to(root.resolve())
     except ValueError as exc:
         raise ReportRenderError("Report output must remain inside the project directory.") from exc
     if resolved.exists():
@@ -314,8 +317,7 @@ def _elisa_data(
         "report_type": "elisa_4pl",
         "title": "ELISA 4PL standard curve analysis",
         "scope": (
-            "Standard-only 4PL diagnostics with optional research-only "
-            "per-measurement estimates."
+            "Standard-only 4PL diagnostics with optional research-only per-measurement estimates."
         ),
         "source": source,
         "methods": {
@@ -387,69 +389,20 @@ def _elisa_data(
     return data, {"configuration": configuration, "sources": sources, "report_id": report_id}
 
 
-def _bundled_node() -> Path:
-    configured = os.environ.get("BIOLAB_REPORT_NODE")
-    candidates = [
-        Path(configured) if configured else None,
-        Path(r"C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe"),
-    ]
-    for candidate in candidates:
-        if candidate is not None and candidate.is_file():
-            return candidate
-    raise ReportRenderError("The bundled Node.js runtime for XLSX rendering is unavailable.")
-
-
-def _bundled_python() -> Path:
-    configured = os.environ.get("BIOLAB_REPORT_PYTHON")
-    candidates = [
-        Path(configured) if configured else None,
-        Path(r"C:\Users\Administrator\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"),
-        Path(sys.executable),
-    ]
-    for candidate in candidates:
-        if candidate is not None and candidate.is_file():
-            return candidate
-    raise ReportRenderError("A Python runtime for DOCX rendering is unavailable.")
-
-
 def _render_xlsx(data_path: Path, output_path: Path, chart_dir: Path) -> None:
-    script = Path(__file__).resolve().parents[3] / "scripts" / "report_workbook.mjs"
     try:
-        qa_dir = output_path.parent.parent / f".qa-{data_path.stem}-{data_path.parent.name}"
-        completed = subprocess.run(
-            [
-                _bundled_node(),
-                str(script),
-                str(data_path),
-                str(output_path),
-                str(chart_dir),
-                str(qa_dir),
-            ],
-            cwd=script.parent.parent,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except OSError as exc:
-        raise ReportRenderError(f"XLSX renderer could not start: {exc}") from exc
-    if completed.returncode != 0:
-        raise ReportRenderError(f"XLSX renderer failed: {completed.stderr[-2000:]}")
+        data = json.loads(data_path.read_text(encoding="utf-8"))
+        write_xlsx(data, output_path, chart_dir)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise ReportRenderError(f"XLSX renderer failed: {exc}") from exc
 
 
 def _render_docx(data_path: Path, output_path: Path, chart_dir: Path) -> None:
-    script = Path(__file__).resolve().parents[3] / "scripts" / "report_docx.py"
     try:
-        completed = subprocess.run(
-            [_bundled_python(), str(script), str(data_path), str(chart_dir), str(output_path)],
-            cwd=script.parent.parent,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except OSError as exc:
-        raise ReportRenderError(f"DOCX renderer could not start: {exc}") from exc
-    if completed.returncode != 0:
-        raise ReportRenderError(f"DOCX renderer failed: {completed.stderr[-2000:]}")
+        data = json.loads(data_path.read_text(encoding="utf-8"))
+        write_docx(data, output_path, chart_dir)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise ReportRenderError(f"DOCX renderer failed: {exc}") from exc
 
 
 def _write_manifest(
@@ -488,8 +441,8 @@ def _write_manifest(
             "biolab_copilot": __version__,
             "python": platform.python_version(),
             "matplotlib": matplotlib.__version__,
-            "docx_renderer": "python-docx",
-            "xlsx_renderer": "@oai/artifact-tool",
+            "docx_renderer": f"python-docx {getattr(docx, '__version__', 'unknown')}",
+            "xlsx_renderer": f"openpyxl {openpyxl.__version__}",
         },
         output_files=output_files,
         warnings=[],

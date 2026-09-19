@@ -12,8 +12,10 @@ Phase 2B adds a confirmed, two-group, experimental-unit-level Welch comparison. 
 baselined locally as `9280e0a` and adds a confirmed, standard-only ELISA 4PL fit. Phase 3B is
 committed as `99a42974384258337b795435d605232a576f175e` and adds research-only per-measurement
 inverse estimates. Phase 4A is committed as `8f232b340e354ff211cbfc7f953aaedf0c3aa280` and
-adds deterministic report packages. Phase 4B is the current uncommitted work and adds a
-local-only Gradio pilot over the existing backends.
+adds deterministic report packages. Phase 4B is committed as
+`a9273a431488e1776eec00cb73653854ab0c9adf` and adds a local-only Gradio pilot over the existing
+backends. Phase 4C is the current local pilot release-hardening work. The package version is
+`0.1.0`, sourced from `src/biolab_copilot/__init__.py` and exposed to packaging dynamically.
 
 Phase 2A and 2B intentionally contain no ELISA processing or fitting. Phase 3A intentionally
 contains no unknown-sample back-calculation. Automatic outlier handling, imputation,
@@ -25,10 +27,27 @@ not aggregate unknown repeats, and refuses extrapolation outside the positive st
 
 ## Windows quick start
 
+One-time installation:
+
 ```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev,templates]"
+setup_windows.bat
+```
+
+Daily startup:
+
+```powershell
+start_local.bat
+```
+
+The scripts resolve the project directory from their own location and use `.venv`. The supported
+range is Python 3.11 through 3.13; Python 3.13 is the current verified Windows runtime, while
+Python 3.11 and 3.12 are not yet verified on this host. The scripts do not modify system settings
+and do not expose a public Gradio share link. Manual development commands and troubleshooting are documented in
+[docs/INSTALL_WINDOWS.md](docs/INSTALL_WINDOWS.md).
+
+For quality checks inside the activated project environment:
+
+```powershell
 python -m pytest -q
 ruff check .
 mypy src
@@ -191,7 +210,9 @@ Each successful package contains `report.docx`, `report.xlsx`, `report_data.json
 measurement-row descriptions, the Welch report consumes Phase 2B experimental-unit results, and
 the ELISA report consumes Phase 3A standard-only diagnostics with optional Phase 3B research-only
 per-measurement estimates. Report generation does not imply assay validation or biological
-independence. See [docs/REPORTING_DEFINITIONS.md](docs/REPORTING_DEFINITIONS.md).
+independence. DOCX uses the declared `python-docx` dependency and XLSX uses the declared
+`openpyxl` dependency; report generation does not require Node, npm, artifact-tool, Codex
+runtime modules, or runtime subprocesses. See [docs/REPORTING_DEFINITIONS.md](docs/REPORTING_DEFINITIONS.md).
 
 ## Phase 4B local UI
 
@@ -210,3 +231,13 @@ choose the assay, worksheet, mapping, analysis design, warning confirmations, an
 Error/blocking QC prevents execution, source files remain unchanged, and downloads are limited
 to files generated in the current session. ELISA inverse results remain research-only and are
 never treated as validated quantification.
+
+## Synthetic demo and pilot scope
+
+The four supported UI workflows are generic grouped descriptive statistics, explicit two-group
+Welch analysis, standard-only ELISA 4PL fitting, and research-only ELISA inverse estimation.
+Use only the repository's synthetic examples; the step-by-step file, mapping, design, expected
+result, confirmation, and report instructions are in
+[docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md). The local pilot is not clinically validated, is not
+production-ready, and does not replace scientific review. Acceptance evidence and environment
+limits are recorded in [docs/PILOT_ACCEPTANCE.md](docs/PILOT_ACCEPTANCE.md).

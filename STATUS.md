@@ -1,11 +1,15 @@
 # Project status
 
-- **Current phase:** Phase 4B — local-first Gradio pilot UI (uncommitted)
-- **Completed:** Phase 0 baseline `5456757`; Phase 1 `4bb5e06`; Phase 2A `1b5cd90`; Phase 2B `fe549c9`; Phase 3A `9280e0a`; Phase 3B `99a42974384258337b795435d605232a576f175e`; Phase 4A `8f232b340e354ff211cbfc7f953aaedf0c3aa280`; read-only CSV/XLSX import; structural QC; confirmed generic grouped descriptions; explicit experimental-unit Welch analysis; standard-only ELISA 4PL design, fit, and diagnostics; research-only per-measurement inverse contracts and offline CLI; deterministic chart/report renderers; UI session service and Gradio pilot surface.
-- **Current test result:** PASS — 78 tests collected and passed; `ruff check .`, `mypy src`, and `git diff --check` also pass. UI service tests cover session isolation, relative-path summaries, stale plan hashes, blocking QC, traversal rejection, download scope, and app construction.
-- **Confirmed decisions:** Phase 4A remains read-only with respect to scientific artifacts. Phase 4B is a thin local service over existing backends; it validates and delegates rather than recalculating. Each UI session is isolated under `outputs/ui-sessions/<session-id>/`; no CLI subprocess, provider, network, database, telemetry, or public sharing is used.
-- **Report safety semantics:** Successful packages contain report-relative paths, source and artifact hashes by role, warnings, methods, limitations, `report_data.json`, `report_manifest.json`, `report.docx`, `report.xlsx`, and PNG charts. Workbooks contain no formulas, macros, or external links. Word files reopen without external relationships.
-- **Unresolved questions:** LibreOffice is unavailable in this Windows runtime, so the required DOCX-to-PNG page rasterization could not run; `python-docx` reopen and OOXML structural checks were completed instead. Binary OOXML archive metadata/relationship IDs may vary between exports even when report data and chart bytes are identical. AI privacy policy, PDF, UI, and institutional retention remain out of scope.
-- **Next step:** Complete manual browser upload and end-to-end workflow acceptance. The service is running only at `http://127.0.0.1:7860`; the current browser-control environment could not expose its native local-file chooser, so browser review remains open. Do not enter AI, PDF, database, or release work automatically.
+- **Current phase:** Phase 4C — Local Pilot Release Hardening (uncommitted)
+- **Phase 4B baseline:** `a9273a431488e1776eec00cb73653854ab0c9adf`
+- **Completed:** Phase 0 `5456757`; Phase 1 `4bb5e06`; Phase 2A `1b5cd90`; Phase 2B `fe549c9`; Phase 3A `9280e0a`; Phase 3B `99a42974384258337b795435d605232a576f175e`; Phase 4A `8f232b340e354ff211cbfc7f953aaedf0c3aa280`; Phase 4B local UI and real-browser acceptance.
+- **Current release version:** `0.1.0`, sourced from `src/biolab_copilot/__init__.py`; setuptools, UI, and report manifests use that value.
+- **Current test result:** PASS — 82 tests passed; `ruff check .`, `mypy src`, and `git diff --check` passed.
+- **Phase 4C.1 work:** Report rendering now uses Python-only `openpyxl` and `python-docx`; the installer selects Python 3.11-3.13 with a preference for the verified 3.13 runtime, and installed wheels resolve the project root explicitly.
+- **Confirmed safety:** UI remains local-only at `127.0.0.1:7860`, uses `share=False`, disables analytics, and does not add AI, LLM, provider, database, telemetry, cloud, or runtime network behavior.
+- **Current runtime evidence:** Python 3.13 is verified on this host; Python 3.11 and 3.12 remain unverified. Installation may require network access unless dependencies are cached; runtime analysis and reporting are offline.
+- **Report dependency boundary:** Report generation must use declared Python dependencies only and must not require Node, npm, artifact-tool, Codex runtime modules, or subprocesses.
+- **Preserved item:** `tests/phase2a-boundaries-lliqpk1e/` is pre-existing and remains untouched and uncommitted.
+- **Next step:** Review the Python 3.13 wheel-isolation report and UI acceptance evidence; keep Phase 4C/4C.1 changes uncommitted.
 - **Last updated:** 2026-09-19 (Asia/Shanghai)
-- **Final state:** Browser review required; Phase 4B changes remain uncommitted. The untracked `tests/phase2a-boundaries-lliqpk1e/` directory is pre-existing and intentionally untouched.
+- **Final state:** Phase 4C release review in progress; Phase 4C changes remain uncommitted and unstaged.

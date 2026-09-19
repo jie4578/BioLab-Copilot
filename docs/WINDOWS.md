@@ -1,9 +1,10 @@
 # Windows 11 development notes
 
-Use Python 3.11 explicitly so the environment matches `pyproject.toml`:
+Use a supported Python 3.11-3.13 interpreter. Python 3.13 is the current verified Windows runtime;
+Python 3.11 and 3.12 are not yet verified on the current host:
 
 ```powershell
-py -3.11 -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev,templates]"
 ```
@@ -17,4 +18,3 @@ If PowerShell blocks activation, run the commands from an activated developer sh
 ```
 
 All paths in the project should use `pathlib.Path`; input filenames must be treated as data, not shell commands. Keep files UTF-8 and avoid committing `.venv`, generated artifacts, user data, or secrets.
-

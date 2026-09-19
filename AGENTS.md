@@ -26,7 +26,7 @@
 From the repository root on Windows PowerShell:
 
 ```powershell
-py -3.11 -m venv .venv
+py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev,templates]"
 python -m pytest -q
@@ -97,6 +97,17 @@ python scripts\generate_xlsx_templates.py
 - Do not infer experimental units, independence, pairing, dilution, replicate type, or assay meaning. Preserve research-only ELISA semantics and all upstream QC warnings.
 - A changed input, mapping, design, preview, or plan hash invalidates prior confirmation. Error/blocking QC always prevents execution.
 - UI tests must be offline and must cover session isolation, stale confirmations, blocking behavior, path safety, and report download scope. Do not advance to a later phase after a failed test or quality check.
+
+## Phase 4C implementation boundary
+
+- Phase 4C may harden packaging, version metadata, Windows setup/start scripts, documentation, and portable report rendering for the accepted local pilot.
+- Keep `0.1.0` consistent across the package, UI, and report manifests through one version source. Do not change contract schema versions or scientific semantics as part of release hardening.
+- Setup scripts must resolve their own project directory, use a project-local `.venv`, select a supported Python 3.11-3.13 interpreter with a preference for the verified Python 3.13 environment, fail visibly, and never modify system Python, PATH, registry, security settings, or user files.
+- Python 3.13 is the current verified Windows runtime; Python 3.11 and 3.12 remain unverified on the current host. Installation may require network access or a local dependency cache, while application execution and scientific analysis remain offline.
+- Report generation must use declared Python dependencies (`openpyxl`, `python-docx`, and the declared plotting stack) directly. It must not depend on Codex runtimes, Node/npm, artifact-tool, hidden executables, or subprocesses.
+- Release checks must not commit outputs, reports, temporary environments, caches, uploads, secrets, or `tests/phase2a-boundaries-lliqpk1e/`. Do not configure a remote, push, or create tags.
+- Runtime behavior remains local-only: no AI, LLM SDK, provider, database, telemetry, cloud interface, public sharing, or network feature. Missing optional helper runtimes must fail clearly rather than being silently downloaded.
+- Phase 4C changes remain uncommitted until explicit owner acceptance. Do not enter a later phase after a failed quality or release check.
 
 ## Phase 4A implementation boundary
 

@@ -22,6 +22,7 @@ from biolab_copilot.contracts import (
     SampleConcentrationsResult,
     StandardsPreview,
 )
+from biolab_copilot.paths import project_root
 
 SCHEMA_VERSION = "1.0"
 MODEL = TypeVar("MODEL", bound=BaseModel)
@@ -221,8 +222,8 @@ def load_package(
     expected_level: str,
 ) -> AnalysisPackage:
     """Load and verify one explicit completed analysis directory."""
-    project_root = Path(__file__).resolve().parents[3]
-    run_dir = _inside(analysis_dir, project_root, label="analysis directory")
+    root = project_root()
+    run_dir = _inside(analysis_dir, root, label="analysis directory")
     if not run_dir.is_dir():
         raise UpstreamValidationError(
             "Analysis directory does not exist.", code="ANALYSIS_DIR_MISSING"
@@ -258,7 +259,7 @@ def load_package(
         plan_path=plan_path,
         manifest=manifest,
         result=result,
-        project_root=project_root,
+        project_root=root,
     )
     manifest_sha = sha256_file(manifest_path)
     return AnalysisPackage(

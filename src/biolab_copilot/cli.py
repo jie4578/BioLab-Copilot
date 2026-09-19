@@ -41,6 +41,7 @@ from biolab_copilot.ingestion import (
     read_source,
     sha256_file,
 )
+from biolab_copilot.paths import project_root
 from biolab_copilot.profiling import profile_and_validate
 from biolab_copilot.reporting import (
     ReportRenderError,
@@ -69,7 +70,7 @@ EXIT_FATAL = 3
 
 
 def _project_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return project_root()
 
 
 def _path_inside_project(path: str | Path) -> Path:

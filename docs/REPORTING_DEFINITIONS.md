@@ -58,8 +58,9 @@ created. The report is reopened with `python-docx` during acceptance checks.
 
 ## Excel report
 
-The XLSX template is authored through the bundled artifact-tool runtime and contains values only.
-It has no formulas, macros, external links, or hidden calculation dependency. Every report has
+The XLSX template is authored directly with the declared `openpyxl` Python dependency and
+contains values only. It has no formulas, macros, external links, or hidden calculation
+dependency. Every report has
 Summary, Provenance, Issues, and Methods sheets. Additional sheets are selected by report type:
 
 - Generic: Group Statistics and Measurements.
@@ -67,9 +68,9 @@ Summary, Provenance, Issues, and Methods sheets. Additional sheets are selected 
 - ELISA: Curve Parameters, Standard Levels, Raw Standards, Residuals, Sample Estimates, and
   Sample Status Summary.
 
-Sheets use fixed names, readable widths, frozen headers, and tables. The workbook is recalculated
-by the authoring runtime and reopened with `openpyxl` for safety checks; `openpyxl` is not used
-to calculate or rewrite the workbook.
+Sheets use fixed names, readable widths, frozen headers, and tables. No workbook recalculation is
+needed because the report contains already-computed values and no formulas. The saved workbook is
+reopened with `openpyxl` and inspected for formulas, macros, and external links.
 
 ## Failure and interpretation rules
 

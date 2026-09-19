@@ -36,6 +36,7 @@ from biolab_copilot.ingestion import (
     read_source,
     sha256_file,
 )
+from biolab_copilot.paths import project_root as resolve_project_root
 from biolab_copilot.profiling import profile_and_validate
 from biolab_copilot.reporting import (
     ReportRenderError,
@@ -113,7 +114,7 @@ class UISessionService:
     """Own isolated UI sessions under one project-local output root."""
 
     def __init__(self, project_root: Path | None = None) -> None:
-        self.project_root = (project_root or Path(__file__).resolve().parents[3]).resolve()
+        self.project_root = (project_root or resolve_project_root()).resolve()
         self.sessions_root = self.project_root / "outputs" / "ui-sessions"
         self.sessions_root.mkdir(parents=True, exist_ok=True)
         self._sessions: dict[str, _Session] = {}
@@ -205,8 +206,8 @@ class UISessionService:
             raise UIServiceError("仅支持 CSV 和 XLSX 文件；其他格式会被拒绝。")
         destination = session.root / "input" / self._safe_name(source.name)
         if destination.exists():
-            destination = session.root / "input" / (
-                f"{destination.stem}-{uuid.uuid4().hex[:8]}{suffix}"
+            destination = (
+                session.root / "input" / (f"{destination.stem}-{uuid.uuid4().hex[:8]}{suffix}")
             )
         shutil.copyfile(source, destination)
         return destination
@@ -327,9 +328,7 @@ class UISessionService:
             "source_sha256": result.input_file.sha256,
             "profile": result.dataset_profile.model_dump(mode="json"),
             "issues": self._public_issues(result.validation_issues, session),
-            "data_preview": [
-                record.model_dump(mode="json") for record in result.records[:50]
-            ],
+            "data_preview": [record.model_dump(mode="json") for record in result.records[:50]],
             "data_preview_total_records": len(result.records),
             "data_preview_truncated": len(result.records) > 50,
             "run_dir": self._public_path(run_dir, session),
@@ -485,10 +484,18 @@ class UISessionService:
     def _public_plan(self, plan: AnalysisPlan, session: _Session) -> dict[str, Any]:
         payload = plan.model_dump(mode="json")
         path_keys = {
-            "input_artifact_path", "design_declaration_path", "experimental_unit_preview_path",
-            "standards_preview_path", "curve_design_path", "inverse_curve_fit_result_path",
-            "inverse_curve_plan_path", "inverse_curve_preview_path", "inverse_curve_manifest_path",
-            "inverse_design_path", "inverse_sample_artifact_path", "inverse_preview_path",
+            "input_artifact_path",
+            "design_declaration_path",
+            "experimental_unit_preview_path",
+            "standards_preview_path",
+            "curve_design_path",
+            "inverse_curve_fit_result_path",
+            "inverse_curve_plan_path",
+            "inverse_curve_preview_path",
+            "inverse_curve_manifest_path",
+            "inverse_design_path",
+            "inverse_sample_artifact_path",
+            "inverse_preview_path",
         }
         for key in path_keys:
             value = payload.get(key)
@@ -570,7 +577,7 @@ class UISessionService:
 
     @staticmethod
     def _blocking(
-        issues: list[ValidationIssue] | tuple[ValidationIssue, ...]
+        issues: list[ValidationIssue] | tuple[ValidationIssue, ...],
     ) -> list[ValidationIssue]:
         return [
             issue
@@ -602,9 +609,15 @@ class UISessionService:
             )
             run_id, run_dir = _run_directory(session.root / "analyses" / "generic_grouped")
             _write_phase2a_outputs(
-                plan_bytes=plan_path.read_bytes(), plan=generic_preflight.plan, result=result,
-                issues=result.issues, plan_sha256=generic_preflight.plan_sha256, run_id=run_id,
-                run_dir=run_dir, started_at=started, finished_at=datetime.now(UTC),
+                plan_bytes=plan_path.read_bytes(),
+                plan=generic_preflight.plan,
+                result=result,
+                issues=result.issues,
+                plan_sha256=generic_preflight.plan_sha256,
+                run_id=run_id,
+                run_dir=run_dir,
+                started_at=started,
+                finished_at=datetime.now(UTC),
                 configuration={"workflow": kind, "ui_session": session.session_id},
                 import_result=imported,
             )
@@ -622,10 +635,16 @@ class UISessionService:
             result = compute_welch_result(welch_preflight)
             run_id, run_dir = _run_directory(session.root / "analyses" / "welch_two_group")
             _write_phase2b_outputs(
-                plan_bytes=plan_path.read_bytes(), plan=welch_preflight.plan,
-                preview=welch_preflight.preview, result=result, issues=result.issues,
+                plan_bytes=plan_path.read_bytes(),
+                plan=welch_preflight.plan,
+                preview=welch_preflight.preview,
+                result=result,
+                issues=result.issues,
                 plan_sha256=welch_preflight.plan_sha256,
-                run_id=run_id, run_dir=run_dir, started_at=started, finished_at=datetime.now(UTC),
+                run_id=run_id,
+                run_dir=run_dir,
+                started_at=started,
+                finished_at=datetime.now(UTC),
                 configuration={"workflow": kind, "ui_session": session.session_id},
                 import_result=imported,
             )
@@ -643,10 +662,16 @@ class UISessionService:
             result = compute_4pl_fit(curve_preflight)
             run_id, run_dir = _run_directory(session.root / "analyses" / "elisa_4pl")
             _write_phase3a_outputs(
-                plan_bytes=plan_path.read_bytes(), plan=curve_preflight.plan,
-                preview=curve_preflight.preview, result=result, issues=result.issues,
+                plan_bytes=plan_path.read_bytes(),
+                plan=curve_preflight.plan,
+                preview=curve_preflight.preview,
+                result=result,
+                issues=result.issues,
                 plan_sha256=curve_preflight.plan_sha256,
-                run_id=run_id, run_dir=run_dir, started_at=started, finished_at=datetime.now(UTC),
+                run_id=run_id,
+                run_dir=run_dir,
+                started_at=started,
+                finished_at=datetime.now(UTC),
                 configuration={"workflow": kind, "ui_session": session.session_id},
                 import_result=imported,
             )
@@ -664,9 +689,15 @@ class UISessionService:
             result = compute_inverse_result(inverse_preflight)
             run_id, run_dir = _run_directory(session.root / "analyses" / "elisa_inverse")
             _write_phase3b_outputs(
-                plan_bytes=plan_path.read_bytes(), plan=inverse_preflight.plan, result=result,
-                issues=result.issues, plan_sha256=inverse_preflight.plan_sha256, run_id=run_id,
-                run_dir=run_dir, started_at=started, finished_at=datetime.now(UTC),
+                plan_bytes=plan_path.read_bytes(),
+                plan=inverse_preflight.plan,
+                result=result,
+                issues=result.issues,
+                plan_sha256=inverse_preflight.plan_sha256,
+                run_id=run_id,
+                run_dir=run_dir,
+                started_at=started,
+                finished_at=datetime.now(UTC),
                 configuration={"workflow": kind, "ui_session": session.session_id},
                 preflight=inverse_preflight,
             )
@@ -715,9 +746,7 @@ class UISessionService:
         except (ReportRenderError, OSError, ValueError) as exc:
             raise UIServiceError(f"报告生成失败：{type(exc).__name__}。") from exc
         files = sorted(
-            self._public_path(path, session)
-            for path in output_dir.rglob("*")
-            if path.is_file()
+            self._public_path(path, session) for path in output_dir.rglob("*") if path.is_file()
         )
         return {
             "report_manifest": self._public_path(manifest, session),

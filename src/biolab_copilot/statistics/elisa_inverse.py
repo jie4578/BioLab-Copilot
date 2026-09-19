@@ -31,6 +31,7 @@ from biolab_copilot.contracts import (
     ValidationIssue,
 )
 from biolab_copilot.ingestion import sha256_file
+from biolab_copilot.paths import project_root
 from biolab_copilot.statistics.elisa_4pl import four_pl_predict
 
 INVERSE_LIMITATIONS = [
@@ -246,7 +247,7 @@ def _curve_assets(
     allowed_root: Path | None = None,
 ) -> CurveAssets:
     result_path = result_path.resolve()
-    root = (allowed_root or result_path.parents[2]).resolve()
+    root = (allowed_root or project_root()).resolve()
     plan_path = (plan_path or result_path.parent / "analysis_plan.json").resolve()
     preview_path = (preview_path or result_path.parent / "standards_preview.json").resolve()
     manifest_path = (manifest_path or result_path.parent / "run_manifest.json").resolve()

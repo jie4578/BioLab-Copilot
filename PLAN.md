@@ -3,9 +3,11 @@
 Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
 
 Current delivery: Phase 1 is committed as `4bb5e06`; Phase 2A is committed as `1b5cd90`; Phase
-2B is baselined locally as `fe549c9`; Phase 3A is baselined locally as `9280e0a`; and Phase 3B
-implementation is complete in the working tree and remains uncommitted pending owner acceptance.
-Later phases have not started.
+2B is committed as `fe549c9`; Phase 3A is baselined as `9280e0a`; Phase 3B is committed as
+`99a42974384258337b795435d605232a576f175e`; Phase 4A is committed as
+`8f232b340e354ff211cbfc7f953aaedf0c3aa280`; and Phase 4B is committed as
+`a9273a431488e1776eec00cb73653854ab0c9adf`. Phase 4C release hardening is the current
+uncommitted work.
 
 ## Phase 0 — Foundation and contracts
 
@@ -97,6 +99,16 @@ Later phases have not started.
 - **Test method:** Offline service-layer tests for session isolation, stale-plan/input confirmation, error/blocking prevention, report download scope, path traversal, and app construction. Run local launch/smoke checks when the runtime permits.
 - **PASS standard:** UI binds only to `127.0.0.1`, uses `share=False` and disabled analytics, calls no subprocess/provider/network/database, refuses changed or unconfirmed plans, preserves research-only ELISA semantics, and exposes only session-relative paths.
 - **Entry to next phase:** Owner accepts the UI workflow and security evidence. Stop; do not add AI, cloud, database, or release behavior automatically.
+
+### Phase 4C — Local Pilot Release Hardening
+
+- **Goal:** Make the accepted local UI installable, launchable, demonstrable, and reviewable in a fresh supported Windows Python 3.11-3.13 environment; Python 3.13 is the current verified runtime.
+- **Allowed modification:** Package metadata and single version source, Windows setup/start scripts, release and demo documentation, portable helper-runtime lookup, packaging tests, and release acceptance checks.
+- **Forbidden modification:** New scientific methods, changed formulas or thresholds, contract meaning changes, AI, LLM SDKs, databases, cloud services, telemetry, public sharing, runtime network features, or access to external projects.
+- **Deliverables:** `0.1.0` version strategy; `CHANGELOG.md`; Windows installation, demo, and pilot acceptance documents; path-independent setup/start scripts; wheel metadata; clean-environment evidence and known limitations.
+- **Test method:** Full pytest, ruff, mypy, diff checks; editable-install and wheel metadata checks; synthetic UI smoke workflow where the supported interpreter and dependencies are available; secret/path/output scans.
+- **PASS standard:** The installer selects a supported 3.11-3.13 interpreter and the current Python 3.13 path is reproducible; UI remains local-only; package, UI, and report-manifest versions agree; Python-only reports reopen safely; no user data, reports, outputs, temporary environments, or secrets enter Git.
+- **Entry to next phase:** Owner accepts release evidence and known limitations. No Phase 4D or AI/cloud work begins automatically.
 
 ## Phase 3 — Deterministic statistics and ELISA curve fitting
 

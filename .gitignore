@@ -10,6 +10,8 @@ dist/
 
 # Local environments and secrets
 .venv/
+.venv-*/
+.pip-cache-*/
 node_modules/
 .env
 .env.*
