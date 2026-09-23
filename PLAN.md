@@ -2,13 +2,10 @@
 
 Every phase ends with a written status review. A failed test, lint check, type check, or unresolved scientific rule blocks entry to the next phase.
 
-Current delivery: Phase 1 is committed as `4bb5e06`; Phase 2A is committed as `1b5cd90`; Phase
-2B is committed as `fe549c9`; Phase 3A is baselined as `9280e0a`; Phase 3B is committed as
-`99a42974384258337b795435d605232a576f175e`; Phase 4A is committed as
-`8f232b340e354ff211cbfc7f953aaedf0c3aa280`; and Phase 4B is committed as
-`a9273a431488e1776eec00cb73653854ab0c9adf`; Phase 4C release hardening is committed as
-`6c6a1f8f9d82d73bf9dd86ee7fd5d0bf74c8b8d0`; Phase 4D public release preparation is the current
-uncommitted work.
+Current delivery: Phases 0 through 4D are baselined in the public repository. Phase 4E.1
+constrains NumPy for the unchanged Python 3.11-3.13 CI matrix and is included in baseline
+`28c054396983f1b74d46fed63b7dd318b0d985c7`. Phase 5A is a documentation and public-showcase
+pass on branch `docs/public-showcase`; no scientific behavior is in scope.
 
 ## Phase 0 — Foundation and contracts
 
@@ -29,7 +26,7 @@ uncommitted work.
 - **Test method:** Synthetic CSV/XLSX round trips, hash checks, malformed-file tests, and Windows path tests.
 - **PASS standard:** Source bytes are unchanged; errors are explicit; all tests and quality checks pass.
 - **Entry to next phase:** Owner confirms the ingestion/profile evidence and unresolved format rules.
-- **Current delivery note:** The implementation is present as uncommitted changes after the Phase 0 baseline. Phase 2 statistics, CV rules, outlier handling, and curve fitting remain forbidden until acceptance.
+- **Delivery note:** Phase 1 read-only ingestion and structural QC are implemented and baselined. Phase 2 statistics, CV rules, outlier handling, and curve fitting were not part of Phase 1.
 
 ## Phase 2 — QC and analysis-plan confirmation
 
@@ -109,7 +106,7 @@ uncommitted work.
 - **Deliverables:** `0.1.0` version strategy; `CHANGELOG.md`; Windows installation, demo, and pilot acceptance documents; path-independent setup/start scripts; wheel metadata; clean-environment evidence and known limitations.
 - **Test method:** Full pytest, ruff, mypy, diff checks; editable-install and wheel metadata checks; synthetic UI smoke workflow where the supported interpreter and dependencies are available; secret/path/output scans.
 - **PASS standard:** The installer selects a supported 3.11-3.13 interpreter and the current Python 3.13 path is reproducible; UI remains local-only; package, UI, and report-manifest versions agree; Python-only reports reopen safely; no user data, reports, outputs, temporary environments, or secrets enter Git.
-- **Entry to next phase:** Owner accepts release evidence and known limitations. No Phase 4D or AI/cloud work begins automatically.
+- **Entry to next phase:** Owner accepts release evidence and known limitations. Later public documentation work requires its own phase authorization.
 
 ### Phase 4D — GitHub public release preparation
 
@@ -119,54 +116,25 @@ uncommitted work.
 - **Deliverables:** Python 3.11/3.12/3.13 CI matrix; pytest/ruff/mypy/build/import/help/UI-construction checks; package-content inspection; public security and contribution guidance; GitHub release instructions and checklist.
 - **Test method:** Local quality checks, YAML parsing, synthetic-only package/build checks, Git history and working-tree secret scans, and wheel/sdist inspection. CI itself must not upload artifacts or start a public server.
 - **PASS standard:** Public documentation is accurate and scoped; CI is parseable and contains no external scientific/provider step; wheel and sdist exclude private/generated artifacts; no sensitive current-tree or history finding remains unresolved; no remote/tag/push is created.
-- **Entry to next phase:** Owner reviews the public-release package and explicitly authorizes any future remote/push/tag action. Phase 4D changes remain uncommitted until that review.
+- **Entry to next phase:** Owner reviews the public-release package and explicitly authorizes any future remote/push/tag action.
+- **Delivery note:** Phase 4D was reviewed and published before baseline `28c054396983f1b74d46fed63b7dd318b0d985c7`.
 
-## Phase 3 — Deterministic statistics and ELISA curve fitting
+### Phase 4E.1 — Public CI dependency compatibility
 
-- **Goal:** Execute only confirmed plans with reproducible statistics for the two supported assays.
-- **Allowed modification:** `statistics`, assay implementations, scientific tests, and structured result contracts.
-- **Forbidden modification:** LLM-generated numbers, silent exclusions, arbitrary prompt code execution, and report/UI work.
-- **Deliverables:** Documented grouped statistics, replicate CV handling, 4PL/5PL decision and implementation if approved, and over-range warnings.
-- **Test method:** Hand-calculated synthetic fixtures, regression tests, edge cases, and independent review of assumptions.
-- **PASS standard:** Same inputs/configuration produce identical numbers; invalid/out-of-range cases are explicit; no unsupported extrapolation is hidden.
-- **Entry to next phase:** Scientific reviewer signs off on formulas, tolerances, and test evidence.
+- **Goal:** Keep the Python 3.11-3.13 CI matrix compatible with NumPy's supported Python range and type declarations.
+- **Allowed modification:** Compatible dependency bounds, release-check assertions, and concise compatibility status notes.
+- **Forbidden modification:** Removing Python versions from CI, changing the mypy target, weakening type checks, changing scientific behavior, or rewriting history.
+- **Deliverables:** A bounded NumPy dependency and a regression check for the Python and mypy compatibility contract.
+- **Test method:** Full pytest, ruff, mypy, build/archive inspection, and wheel metadata review.
+- **PASS standard:** The declared NumPy bound is present in built metadata; Python 3.11 remains supported and targeted by CI.
+- **Delivery note:** The local compatibility fix is included in baseline `28c054396983f1b74d46fed63b7dd318b0d985c7`.
 
-## Phase 4 — Visualization and batch orchestration
+### Phase 5A — Public showcase
 
-- **Goal:** Render charts from structured results and support isolated batch runs.
-- **Allowed modification:** `visualization`, `batch`, artifact metadata, and tests.
-- **Forbidden modification:** Recomputing statistics in chart code, mutating input data, AI, and report narrative.
-- **Deliverables:** Reproducible chart artifacts, batch isolation, and artifact hashes.
-- **Test method:** Golden metadata tests, deterministic chart-data tests, and failure isolation tests.
-- **PASS standard:** Charts trace to result IDs and source hashes; one failed run does not corrupt another.
-- **Entry to next phase:** Artifact provenance and visual QA are accepted.
-
-## Phase 5 — Audit and Word/Excel/JSON reporting
-
-- **Goal:** Produce reviewable reports from manifests and derived artifacts.
-- **Allowed modification:** `audit`, `reporting`, templates, and tests.
-- **Forbidden modification:** Changing scientific results during rendering, hiding warnings, AI calls, and UI-specific business rules.
-- **Deliverables:** Complete run manifest, JSON export, XLSX report, DOCX report, and warning/assumption sections.
-- **Test method:** Schema validation, hash/provenance tests, report extraction tests, and rendered visual QA.
-- **PASS standard:** Reports identify source hashes, configuration, software versions, warnings, and status.
-- **Entry to next phase:** Report reviewer confirms traceability and readable failure states.
-
-## Phase 6 — Optional constrained AI interpretation
-
-- **Goal:** Add an optional narrative layer over structured deterministic results.
-- **Allowed modification:** `ai` adapter, prompts, redaction policy, and tests using mocked providers.
-- **Forbidden modification:** Direct data-frame/statistical execution by LLM, source deletion, conclusion mutation, mandatory network dependency, or secret leakage.
-- **Deliverables:** Provider-neutral interface, structured input envelope, grounded narrative schema, and offline fallback.
-- **Test method:** Mocked provider tests, prompt-injection tests, unavailable-provider tests, and provenance checks.
-- **PASS standard:** AI can be disabled with no loss of core analysis; generated text is labeled and cannot alter numbers.
-- **Entry to next phase:** Privacy, security, and scientific review approve the adapter boundary.
-
-## Phase 7 — Formal UI, integration, and release hardening
-
-- **Goal:** Expose the controlled workflow through a maintainable Windows-compatible UI and prepare a reviewed release.
-- **Allowed modification:** `ui`, packaging, usability, accessibility, integration tests, and release documentation.
-- **Forbidden modification:** Bypassing phase gates, hiding provenance/QC, weakening contracts, or introducing unreviewed assay rules.
-- **Deliverables:** User workflow, localization boundary, packaging, support guidance, and release checklist.
-- **Test method:** End-to-end synthetic runs, UI tests, Windows smoke tests, security checks, and reproducibility checks.
-- **PASS standard:** Complete synthetic workflow is traceable, reversible where appropriate, and documented with known limitations.
-- **Entry to release:** Owner and scientific reviewer approve the release scope; no claim of production readiness is made without separate validation.
+- **Goal:** Make the public project understandable through a concise README, accurate demo, architecture overview, and genuine UI captures.
+- **Allowed modification:** README and project documentation; documentation-only checks; clearly synthetic example data; genuine screenshots captured from the running local UI.
+- **Forbidden modification:** Scientific formulas, data contracts, QC thresholds, report values, UI workflow logic, versions, release tags, or claims of clinical/production validation. Do not commit or push in this phase.
+- **Deliverables:** A portfolio-oriented README, a 3-5 minute synthetic demo and 60-second introduction, aligned architecture/status/plan documents, and privacy-reviewed screenshots.
+- **Test method:** Full pytest, ruff, mypy, diff check, relative-link and image validation, Mermaid review, and changed-file scope review.
+- **PASS standard:** Public documentation matches implemented behavior; all referenced screenshot assets are genuine, readable, and privacy-reviewed; no scientific implementation changes are present.
+- **Current state:** Documentation and genuine browser screenshots are complete on `docs/public-showcase` and await owner review. The screenshots were produced from real local UI interactions with synthetic inputs; no scientific implementation was changed.

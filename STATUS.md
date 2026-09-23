@@ -1,25 +1,18 @@
 # Project status
 
-- **Current phase:** Phase 4E.1 — CI compatibility fix (committed locally)
-- **Phase 4B baseline:** `a9273a431488e1776eec00cb73653854ab0c9adf`
-- **Phase 4C baseline:** `6c6a1f8f9d82d73bf9dd86ee7fd5d0bf74c8b8d0`
-- **Completed:** Phase 0 `5456757`; Phase 1 `4bb5e06`; Phase 2A `1b5cd90`; Phase 2B `fe549c9`; Phase 3A `9280e0a`; Phase 3B `99a42974384258337b795435d605232a576f175e`; Phase 4A `8f232b340e354ff211cbfc7f953aaedf0c3aa280`; Phase 4B local UI and real-browser acceptance.
-- **Current release version:** `0.1.0`, sourced from `src/biolab_copilot/__init__.py`; setuptools, UI, and report manifests use that value.
-- **Current test result:** PASS — 84 tests passed; `ruff check .`, `mypy src`, and `git diff --check` pass after the Phase 4E.1 compatibility fix.
-- **Phase 4C.1 work:** Report rendering now uses Python-only `openpyxl` and `python-docx`; the installer selects Python 3.11-3.13 with a preference for the verified 3.13 runtime, and installed wheels resolve the project root explicitly.
-- **Confirmed safety:** UI remains local-only at `127.0.0.1:7860`, uses `share=False`, disables analytics, and does not add AI, LLM, provider, database, telemetry, cloud, or runtime network behavior.
-- **Current runtime evidence:** Python 3.13 is verified on this host; Python 3.11 and 3.12 remain unverified. Installation may require network access unless dependencies are cached; runtime analysis and reporting are offline.
-- **Report dependency boundary:** Report generation must use declared Python dependencies only and must not require Node, npm, artifact-tool, Codex runtime modules, or subprocesses.
-- **Preserved item:** `tests/phase2a-boundaries-lliqpk1e/` is pre-existing and remains untouched and uncommitted.
-- **Phase 4D scope:** Public README/release documentation, security/contribution guidance, GitHub Actions CI, and wheel/sdist content inspection only. No remote, push, tag, or scientific feature is authorized.
-- **CI status:** Matrix configuration is planned for Python 3.11, 3.12, and 3.13. Only Python 3.13.9 has been verified on the current host.
-- **Phase 4E.1 compatibility fix:** The direct NumPy requirement is being constrained to `>=2.0,<2.5`.
-  This blocks the newer NumPy typing family implicated by the first public CI failure while
-  preserving the Python 3.11 minimum and the unchanged 3.11-3.13 CI matrix. The locally
-  validated environment is Python 3.13.9 with NumPy 2.3.5, SciPy 1.16.3, and mypy 1.17.1.
-- **Security review:** No credentials, private keys, email addresses, phone numbers, or credential assignments were found in the current public candidate or nine-commit history. The protected untracked boundary directory contains a pre-existing diagnostic JSON with a local path and remains untouched; an older Phase 4B renderer commit contains non-sensitive local-user redaction literals that are not rewritten.
-- **Next step:** Review the local compatibility commit and manually push it if desired; this
-  environment must not push, tag, or create a release.
-- **Last updated:** 2026-09-19 (Asia/Shanghai)
-- **Final state:** Phase 4E.1 compatibility checks pass locally; the fix is committed locally,
-  origin/main remains unchanged, and the protected untracked boundary directory remains untouched.
+- **Current phase:** Phase 5A — Public Showcase; implementation complete and awaiting review.
+- **Baseline:** `main` and `origin/main` were both `28c054396983f1b74d46fed63b7dd318b0d985c7` at phase start. This work is on `docs/public-showcase`.
+- **Release:** `v0.1.0` is the current release. The package version comes from `src/biolab_copilot/__init__.py`.
+- **Implemented workflows:** Generic grouped measurement-row descriptions; explicit two-group experimental-unit Welch analysis; standard-only ELISA 4PL fitting; per-measurement research-only ELISA inverse estimates.
+- **Scientific boundary:** No Phase 5A statistical implementation changes are permitted. ELISA inverse output remains research-only, does not extrapolate, and does not enable validated quantification.
+- **Runtime:** The UI is local-only at `127.0.0.1:7860`; Python 3.13.9 is verified on this host. The CI configuration targets Python 3.11, 3.12, and 3.13; consult GitHub Actions for current job results.
+- **Dependency compatibility:** Phase 4E.1 bounds NumPy to `>=2.0,<2.5` while preserving `requires-python >=3.11,<3.14` and mypy's Python 3.11 target.
+- **Phase 5A checks:** 88 pytest tests passed; `ruff check .`, `mypy src`, and `git diff --check` passed after the documentation, synthetic fixture, and genuine screenshot updates.
+- **Synthetic inverse fixture:** `examples/phase3b_inverse_boundary.csv` is fabricated from the documented increasing 4PL form. It includes one within-span, one below-span, and one above-span response.
+- **Browser asset status:** Playwright drove installed Microsoft Edge against the real local Gradio UI. Generic grouped, Welch, ELISA 4PL, and ELISA inverse workflows completed with explicit mapping, plan generation, SHA-256 confirmation, execution, report generation, and download-scope validation where applicable.
+- **Screenshot status:** Seven privacy-reviewed PNGs are present in `docs/images/`. The home image hides the ephemeral session ID; result and report images contain no user name, local absolute path, credential, or real experiment data.
+- **Synthetic acceptance evidence:** Generic means were 1.0 and 1.445; Welch produced mean difference -3, t -3.6742346141747673, df 4, p 0.021311641128756727, and CI [-5.266957935527524, -0.7330420644724769]; 4PL recovered L/U/C/B approximately 0.1/2.1/10/1 with validation flags false; inverse retained one within-span estimate and two out-of-span null results.
+- **Preserved item:** `tests/phase2a-boundaries-lliqpk1e/` remains the pre-existing untracked directory and has not been changed, staged, or committed.
+- **Git restrictions:** Phase 5A changes remain unstaged and uncommitted on `docs/public-showcase`; no push, tag, or Release is part of this phase.
+- **Last updated:** 2026-09-23 (Asia/Shanghai)
+- **Final state:** `READY_FOR_PHASE_5A_REVIEW` after final quality checks.

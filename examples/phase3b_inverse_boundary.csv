@@ -1,0 +1,13 @@
+sample_id,sample_type,standard_concentration,measurement,concentration_unit,measurement_unit,replicate_id
+SYN-STD-0,standard,0,0.1,ng/mL,AU,SYN-R0
+SYN-STD-0.1,standard,0.1,0.1198019801980198,ng/mL,AU,SYN-R1
+SYN-STD-0.3,standard,0.3,0.158252427184466,ng/mL,AU,SYN-R2
+SYN-STD-1,standard,1,0.2818181818181818,ng/mL,AU,SYN-R3
+SYN-STD-3,standard,3,0.5615384615384615,ng/mL,AU,SYN-R4
+SYN-STD-10,standard,10,1.1,ng/mL,AU,SYN-R5
+SYN-STD-30,standard,30,1.6,ng/mL,AU,SYN-R6
+SYN-STD-100,standard,100,1.918181818181818,ng/mL,AU,SYN-R7
+SYN-STD-300,standard,300,2.035483870967742,ng/mL,AU,SYN-R8
+SYN-IN-SPAN,sample,,1.1,ng/mL,AU,SYN-R9
+SYN-BELOW-SPAN,sample,,0.1099502487562189,ng/mL,AU,SYN-R10
+SYN-ABOVE-SPAN,sample,,2.08019801980198,ng/mL,AU,SYN-R11
